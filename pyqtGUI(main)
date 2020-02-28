@@ -10,23 +10,21 @@ class Window(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        # self.sourceLabel = QLabel(self)
-        # self.source = QComboBox(self)
-        # self.destinationLabel = QLabel(self)
-        # self.destination = QComboBox(self)
-
         # Set PyQt window size
         self.title = "MAP PROJECT"
         self.left = 200
         self.top = 100
         self.width = 1500
         self.height = 800
+        self.iconName = "SIT.png"
 
         self.initWindow()
 
     def initWindow(self):
         # set window title
         self.setWindowTitle(self.title)
+        # set icon
+        self.setWindowIcon((QtGui.QIcon(self.iconName)))
         # set window geometry
         # self.setGeometry(self.left, self.top, self.width, self.height)
         # Disable PyQt 5 application from resizing
