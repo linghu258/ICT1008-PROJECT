@@ -86,7 +86,6 @@ class Window(QMainWindow):
         vlay.addWidget(sourceDDL)
         vlay.addWidget(destinationLabel)
         vlay.addWidget(destinationDDL)
-        # vlay.addStretch()
         vlay.addWidget(shortPathButton)
         vlay.addWidget(button2)
         vlay.addWidget(button3)
