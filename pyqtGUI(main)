@@ -1,35 +1,39 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QComboBox, QLabel
 import sys
-import folium
 import io
-from PyQt5.QtCore import QRect
-from PyQt5 import QtCore, QtGui, QtWidgets, QtWebEngineWidgets
+import csv
+import folium
+from PyQt5.QtWidgets import QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView
+from PyQt5 import QtWidgets, QtWebEngineWidgets
 
 
 class Window(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        # self.sourceLabel = QLabel(self)
+        # self.source = QComboBox(self)
+        # self.destinationLabel = QLabel(self)
+        # self.destination = QComboBox(self)
+
         # Set PyQt window size
         self.title = "MAP PROJECT"
         self.left = 200
         self.top = 100
-        self.width = 1500
-        self.height = 800
-        self.iconName = "SIT.png"
+        self.width = 1800
+        self.height = 950
 
         self.initWindow()
 
     def initWindow(self):
         # set window title
         self.setWindowTitle(self.title)
-        # set icon
-        self.setWindowIcon((QtGui.QIcon(self.iconName)))
         # set window geometry
         # self.setGeometry(self.left, self.top, self.width, self.height)
         # Disable PyQt 5 application from resizing
         self.setFixedSize(self.width, self.height)
 
+        # self.buttonUI()
+        # self.dropDownUI()
         self.guiSettings()
 
         self.show()
@@ -43,17 +47,22 @@ class Window(QMainWindow):
         button2.setFixedSize(150, 50)
         button3.setFixedSize(150, 50)
 
-
+        with open('test.csv', newline='') as csvfile:
+            spamreader = csv.reader(csvfile, delimiter=',')
+            Tup1 = []
+            for row in spamreader:
+                Tup1.append(row[0])
+            csvfile.closed
+#######################################################################################################################
         # Create drop drown List (source)
         sourceLabel = QtWidgets.QLabel()
         sourceLabel.setText("Please select the Source location")
         sourceLabel.setFixedSize(200, 30)
 
         sourceDDL = QtWidgets.QComboBox()
-        sourceDDL.addItem("Python")
-        sourceDDL.addItem("Java")
-        sourceDDL.addItem("C++")
-        sourceDDL.addItem("C#")
+        for x in Tup1:
+            sourceDDL.addItem(x)
+        # sourceDDL.addItem(Tup1)
         sourceDDL.setFixedSize(150, 50)
 
         # Create drop down list (destination)
@@ -62,41 +71,66 @@ class Window(QMainWindow):
         destinationLabel.setFixedSize(200, 30)
 
         destinationDDL = QtWidgets.QComboBox()
-        destinationDDL.addItem("Python")
-        destinationDDL.addItem("Java")
-        destinationDDL.addItem("C++")
-        destinationDDL.addItem("C#")
+        for x in Tup1:
+            destinationDDL.addItem(x)
         destinationDDL.setFixedSize(150, 50)
+#######################################################################################################################
+        # Create table
+        tableWidget= QTableWidget()
 
+        tableWidget.setRowCount(5)
+        tableWidget.setColumnCount(3)
+
+        tableWidget.setItem(0, 0, QTableWidgetItem("Source"))
+        tableWidget.setItem(0, 1, QTableWidgetItem("Destination"))
+        tableWidget.setItem(0, 2, QTableWidgetItem("Distance"))
+
+        tableWidget.setFixedSize(800, 175)
+        tableWidget.setContentsMargins(10, 0, 10, 0)
+
+        tableWidget.horizontalHeader().setStretchLastSection(True)
+        tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # Set columns to read only, no editing
+        tableWidget.setEditTriggers(QtWidgets.QTableWidget.NoEditTriggers)
+#######################################################################################################################
         self.view = QtWebEngineWidgets.QWebEngineView()
-        # set margin for the map
-        self.view.setContentsMargins(50, 50, 50, 50)
+        # set margin for the map (left, top, right, down)
+        self.view.setContentsMargins(10, 10, 10, 5)
 
+        # Creating Folium Map
+        m = folium.Map(location=[1.400150, 103.910172], titles="Punggol", zoom_start=17)
+        data = io.BytesIO()
+        m.save(data, close_file=False)
+        self.view.setHtml(data.getvalue().decode())
+
+        # PyQt Horizontal Box layout
         central_widget = QtWidgets.QWidget()
         self.setCentralWidget(central_widget)
         lay = QtWidgets.QHBoxLayout(central_widget)
 
-        control_container = QtWidgets.QWidget()
-        vlay = QtWidgets.QVBoxLayout(control_container)
-        vlay.setSpacing(20)
+        # Create vertical layout container to contains all buttons, label, combobox, etc.
+        controller_container = QtWidgets.QWidget()
+        vlay = QtWidgets.QVBoxLayout(controller_container)
+        vlay.setSpacing(10)
         vlay.addStretch()
         vlay.addWidget(sourceLabel)
         vlay.addWidget(sourceDDL)
         vlay.addWidget(destinationLabel)
         vlay.addWidget(destinationDDL)
+        vlay.addStretch()
         vlay.addWidget(shortPathButton)
         vlay.addWidget(button2)
         vlay.addWidget(button3)
         vlay.addStretch()
 
-        lay.addWidget(control_container)
-        lay.addWidget(self.view, stretch=1)
+        # Create vertical layout container to contain map and table
+        map_container = QtWidgets.QWidget()
+        vlay = QtWidgets.QVBoxLayout(map_container)
+        vlay.addWidget(self.view, stretch=1)
+        vlay.addWidget(tableWidget)
 
-        m = folium.Map(location=[1.3984, 103.9072], titles="Punggol", zoom_start=17)
-
-        data = io.BytesIO()
-        m.save(data, close_file=False)
-        self.view.setHtml(data.getvalue().decode())
+        lay.addWidget(controller_container)
+        lay.addWidget(map_container)
 
 
 if __name__ == "__main__":
