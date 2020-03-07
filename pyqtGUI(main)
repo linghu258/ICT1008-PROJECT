@@ -49,7 +49,7 @@ class Window(QMainWindow):
         button2.setFixedSize(150, 50)
         button3.setFixedSize(150, 50)
 
-        with open('exportBuildings.geojson') as access_json:
+        with open('exportBuilding.geojson') as access_json:
             read_content = json.load(access_json)
 
         feature_access = read_content['features']
@@ -111,7 +111,7 @@ class Window(QMainWindow):
 
         # Creating Folium Map
         m = folium.Map(location=[1.400150, 103.910172], titles="Punggol", zoom_start=17)
-        nodeData = os.path.join('exportFULL.geojson')
+        nodeData = os.path.join('exportBuilding.geojson')
         folium.GeoJson(nodeData).add_to(m)
         data = io.BytesIO()
         m.save(data, close_file=False)
