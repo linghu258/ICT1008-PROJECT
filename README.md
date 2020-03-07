@@ -3,5 +3,4 @@
 WELCOME TO P2-6 ICT 1008 Project
 
 - exportBuildings.geojson (File contain data for all buildings, E.g. HDB, schools)
-- exportFULL.geojson (File contain data for folium map)
 - exportRoadPath.geojson (File contain data for roads in Punggol)
