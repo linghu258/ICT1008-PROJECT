@@ -1,3 +1,5 @@
+import json
+import os
 import sys
 import io
 import csv
@@ -47,21 +49,26 @@ class Window(QMainWindow):
         button2.setFixedSize(150, 50)
         button3.setFixedSize(150, 50)
 
-        with open('test.csv', newline='') as csvfile:
-            spamreader = csv.reader(csvfile, delimiter=',')
-            Tup1 = []
-            for row in spamreader:
-                Tup1.append(row[0])
-            csvfile.closed
+        with open('exportBuildings.geojson') as access_json:
+            read_content = json.load(access_json)
+
+        feature_access = read_content['features']
 #######################################################################################################################
+
         # Create drop drown List (source)
         sourceLabel = QtWidgets.QLabel()
         sourceLabel.setText("Please select the Source location")
         sourceLabel.setFixedSize(200, 30)
 
         sourceDDL = QtWidgets.QComboBox()
-        for x in Tup1:
-            sourceDDL.addItem(x)
+        for feature_data in feature_access:
+            buildingName = feature_data['properties']
+            if 'name' in buildingName:
+                retrieveHDB = buildingName['name']
+                sourceDDL.addItem(retrieveHDB)
+            elif 'addr:housename' in buildingName and 'addr:housenumber' in buildingName:
+                retrieveName = buildingName['addr:housename'] + " " + buildingName['addr:housenumber']
+                sourceDDL.addItem(retrieveName)
         # sourceDDL.addItem(Tup1)
         sourceDDL.setFixedSize(150, 50)
 
@@ -71,8 +78,16 @@ class Window(QMainWindow):
         destinationLabel.setFixedSize(200, 30)
 
         destinationDDL = QtWidgets.QComboBox()
-        for x in Tup1:
-            destinationDDL.addItem(x)
+        """for x in Tup1:
+            destinationDDL.addItem(x)"""
+        for feature_data in feature_access:
+            buildingName = feature_data['properties']
+            if 'name' in buildingName:
+                retrieveHDB = buildingName['name']
+                destinationDDL.addItem(retrieveHDB)
+            elif 'addr:housename' in buildingName and 'addr:housenumber' in buildingName:
+                retrieveName = buildingName['addr:housename'] + " " + buildingName['addr:housenumber']
+                destinationDDL.addItem(retrieveName)
         destinationDDL.setFixedSize(150, 50)
 #######################################################################################################################
         # Create table
@@ -99,6 +114,8 @@ class Window(QMainWindow):
 
         # Creating Folium Map
         m = folium.Map(location=[1.400150, 103.910172], titles="Punggol", zoom_start=17)
+        nodeData = os.path.join('exportFULL.geojson')
+        folium.GeoJson(nodeData).add_to(m)
         data = io.BytesIO()
         m.save(data, close_file=False)
         self.view.setHtml(data.getvalue().decode())
