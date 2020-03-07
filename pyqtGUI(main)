@@ -69,8 +69,7 @@ class Window(QMainWindow):
             elif 'addr:housename' in buildingName and 'addr:housenumber' in buildingName:
                 retrieveName = buildingName['addr:housename'] + " " + buildingName['addr:housenumber']
                 sourceDDL.addItem(retrieveName)
-        # sourceDDL.addItem(Tup1)
-        sourceDDL.setFixedSize(150, 50)
+        sourceDDL.setFixedSize(180, 70)
 
         # Create drop down list (destination)
         destinationLabel = QtWidgets.QLabel()
@@ -78,8 +77,6 @@ class Window(QMainWindow):
         destinationLabel.setFixedSize(200, 30)
 
         destinationDDL = QtWidgets.QComboBox()
-        """for x in Tup1:
-            destinationDDL.addItem(x)"""
         for feature_data in feature_access:
             buildingName = feature_data['properties']
             if 'name' in buildingName:
@@ -88,7 +85,7 @@ class Window(QMainWindow):
             elif 'addr:housename' in buildingName and 'addr:housenumber' in buildingName:
                 retrieveName = buildingName['addr:housename'] + " " + buildingName['addr:housenumber']
                 destinationDDL.addItem(retrieveName)
-        destinationDDL.setFixedSize(150, 50)
+        destinationDDL.setFixedSize(180, 70)
 #######################################################################################################################
         # Create table
         tableWidget= QTableWidget()
