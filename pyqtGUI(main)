@@ -2,7 +2,6 @@ import json
 import os
 import sys
 import io
-import csv
 import folium
 from PyQt5.QtWidgets import QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView
 from PyQt5 import QtWidgets, QtWebEngineWidgets
@@ -61,6 +60,11 @@ class Window(QMainWindow):
         sourceLabel.setFixedSize(200, 30)
 
         sourceDDL = QtWidgets.QComboBox()
+        # Set font size
+        font = sourceDDL.font()
+        font.setPointSize(13)
+        sourceDDL.setFont(font)
+        # Retrieve names from json file
         for feature_data in feature_access:
             buildingName = feature_data['properties']
             if 'name' in buildingName:
@@ -77,6 +81,11 @@ class Window(QMainWindow):
         destinationLabel.setFixedSize(200, 30)
 
         destinationDDL = QtWidgets.QComboBox()
+        # Set font size
+        font = destinationDDL.font()
+        font.setPointSize(13)
+        destinationDDL.setFont(font)
+        # Retrieve names from json file
         for feature_data in feature_access:
             buildingName = feature_data['properties']
             if 'name' in buildingName:
