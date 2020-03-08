@@ -40,6 +40,11 @@ class Window(QMainWindow):
 
     def guiSettings(self):
         # Create button
+        pathLabel = QtWidgets.QLabel()
+        pathLabel.setText("Select Paths:")
+        pathLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
+        pathLabel.setFixedSize(200, 30)
+
         walkingPathButton = QtWidgets.QPushButton(self.tr("Walking Path"))
         walkingPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
         walkingPathButton.setFixedSize(150, 50)
@@ -65,7 +70,8 @@ class Window(QMainWindow):
 
         # Create drop drown List (source)
         sourceLabel = QtWidgets.QLabel()
-        sourceLabel.setText("Please select the Source location")
+        sourceLabel.setText("Select Source location")
+        sourceLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
         sourceLabel.setFixedSize(200, 30)
 
         sourceDDL = QtWidgets.QComboBox()
@@ -83,7 +89,8 @@ class Window(QMainWindow):
 
         # Create drop down list (destination)
         destinationLabel = QtWidgets.QLabel()
-        destinationLabel.setText("Please select the Destination location")
+        destinationLabel.setText("Select Destination location")
+        destinationLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
         destinationLabel.setFixedSize(200, 30)
 
         destinationDDL = QtWidgets.QComboBox()
@@ -112,7 +119,7 @@ class Window(QMainWindow):
 
         self.view = QtWebEngineWidgets.QWebEngineView()
         # set margin for the map (left, top, right, down)
-        self.view.setContentsMargins(10, 10, 10, 5)
+        self.view.setContentsMargins(5, 10, 10, 5)
 
         # Creating Folium Map
         m = folium.Map(location=[1.400150, 103.910172], titles="Punggol", zoom_start=17)
@@ -139,6 +146,7 @@ class Window(QMainWindow):
         vlay.addWidget(destinationLabel)
         vlay.addWidget(destinationDDL)
         vlay.addStretch()
+        vlay.addWidget(pathLabel)
         vlay.addWidget(walkingPathButton)
         vlay.addWidget(drivingPathButton)
         vlay.addWidget(fastestPathButton)
