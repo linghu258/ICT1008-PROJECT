@@ -40,12 +40,18 @@ class Window(QMainWindow):
 
     def guiSettings(self):
         # Create button
-        shortPathButton = QtWidgets.QPushButton(self.tr("Find shortest path"))
-        button2 = QtWidgets.QPushButton(self.tr("Another path"))
-        button3 = QtWidgets.QPushButton(self.tr("Another path"))
-        shortPathButton.setFixedSize(150, 50)
-        button2.setFixedSize(150, 50)
-        button3.setFixedSize(150, 50)
+        walkingPathButton = QtWidgets.QPushButton(self.tr("Walking Path"))
+        walkingPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
+        walkingPathButton.setFixedSize(150, 50)
+
+        drivingPathButton = QtWidgets.QPushButton(self.tr("Driving path"))
+        drivingPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
+        drivingPathButton.setFixedSize(150, 50)
+
+        fastestPathButton = QtWidgets.QPushButton(self.tr("Fastest path"))
+        fastestPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
+        fastestPathButton.setFixedSize(150, 50)
+
 
         with open('exportBuilding.geojson') as access_json:
             read_content = json.load(access_json)
@@ -133,9 +139,9 @@ class Window(QMainWindow):
         vlay.addWidget(destinationLabel)
         vlay.addWidget(destinationDDL)
         vlay.addStretch()
-        vlay.addWidget(shortPathButton)
-        vlay.addWidget(button2)
-        vlay.addWidget(button3)
+        vlay.addWidget(walkingPathButton)
+        vlay.addWidget(drivingPathButton)
+        vlay.addWidget(fastestPathButton)
         vlay.addStretch()
 
         """checkbox_container = QtWidgets.QWidget()
