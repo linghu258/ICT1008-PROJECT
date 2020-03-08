@@ -1,10 +1,12 @@
+import io
 import json
 import os
 import sys
-import io
+
 import folium
-from PyQt5.QtWidgets import QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView
+from folium import features
 from PyQt5 import QtWidgets, QtWebEngineWidgets
+from PyQt5.QtWidgets import QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView
 
 
 class Window(QMainWindow):
@@ -52,7 +54,7 @@ class Window(QMainWindow):
             read_content = json.load(access_json)
 
         feature_access = read_content['features']
-#######################################################################################################################
+        #######################################################################################################################
 
         # Create drop drown List (source)
         sourceLabel = QtWidgets.QLabel()
@@ -70,9 +72,9 @@ class Window(QMainWindow):
             if 'name' in buildingName:
                 retrieveHDB = buildingName['name']
                 sourceDDL.addItem(retrieveHDB)
-            elif 'addr:housename' in buildingName and 'addr:housenumber' in buildingName:
+            """elif 'addr:housename' in buildingName and 'addr:housenumber' in buildingName:
                 retrieveName = buildingName['addr:housename'] + " " + buildingName['addr:housenumber']
-                sourceDDL.addItem(retrieveName)
+                sourceDDL.addItem(retrieveName)"""
         sourceDDL.setFixedSize(180, 70)
 
         # Create drop down list (destination)
@@ -91,13 +93,13 @@ class Window(QMainWindow):
             if 'name' in buildingName:
                 retrieveHDB = buildingName['name']
                 destinationDDL.addItem(retrieveHDB)
-            elif 'addr:housename' in buildingName and 'addr:housenumber' in buildingName:
+            """elif 'addr:housename' in buildingName and 'addr:housenumber' in buildingName:
                 retrieveName = buildingName['addr:housename'] + " " + buildingName['addr:housenumber']
-                destinationDDL.addItem(retrieveName)
+                destinationDDL.addItem(retrieveName)"""
         destinationDDL.setFixedSize(180, 70)
-#######################################################################################################################
+        #######################################################################################################################
         # Create table
-        tableWidget= QTableWidget()
+        tableWidget = QTableWidget()
 
         tableWidget.setRowCount(5)
         tableWidget.setColumnCount(3)
@@ -113,7 +115,7 @@ class Window(QMainWindow):
         tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         # Set columns to read only, no editing
         tableWidget.setEditTriggers(QtWidgets.QTableWidget.NoEditTriggers)
-#######################################################################################################################
+        #######################################################################################################################
         self.view = QtWebEngineWidgets.QWebEngineView()
         # set margin for the map (left, top, right, down)
         self.view.setContentsMargins(10, 10, 10, 5)
@@ -121,7 +123,10 @@ class Window(QMainWindow):
         # Creating Folium Map
         m = folium.Map(location=[1.400150, 103.910172], titles="Punggol", zoom_start=17)
         nodeData = os.path.join('exportBuilding.geojson')
-        folium.GeoJson(nodeData).add_to(m)
+
+        geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
+
+        geo_json.add_to(m)
         data = io.BytesIO()
         m.save(data, close_file=False)
         self.view.setHtml(data.getvalue().decode())
