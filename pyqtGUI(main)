@@ -4,9 +4,8 @@ import os
 import sys
 
 import folium
-from folium import features
-from PyQt5 import QtWidgets, QtWebEngineWidgets
-from PyQt5.QtWidgets import QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView
+from PyQt5 import QtWidgets, QtWebEngineWidgets, QtGui
+from PyQt5.QtWidgets import QMainWindow
 
 
 class Window(QMainWindow):
@@ -35,8 +34,6 @@ class Window(QMainWindow):
         # Disable PyQt 5 application from resizing
         self.setFixedSize(self.width, self.height)
 
-        # self.buttonUI()
-        # self.dropDownUI()
         self.guiSettings()
 
         self.show()
@@ -54,7 +51,11 @@ class Window(QMainWindow):
             read_content = json.load(access_json)
 
         feature_access = read_content['features']
-        #######################################################################################################################
+        """for feature_data in feature_access:
+            property_data = feature_data['properties']
+            print(property_data)"""
+
+#######################################################################################################################
 
         # Create drop drown List (source)
         sourceLabel = QtWidgets.QLabel()
@@ -72,9 +73,6 @@ class Window(QMainWindow):
             if 'name' in buildingName:
                 retrieveHDB = buildingName['name']
                 sourceDDL.addItem(retrieveHDB)
-            """elif 'addr:housename' in buildingName and 'addr:housenumber' in buildingName:
-                retrieveName = buildingName['addr:housename'] + " " + buildingName['addr:housenumber']
-                sourceDDL.addItem(retrieveName)"""
         sourceDDL.setFixedSize(180, 70)
 
         # Create drop down list (destination)
@@ -93,29 +91,19 @@ class Window(QMainWindow):
             if 'name' in buildingName:
                 retrieveHDB = buildingName['name']
                 destinationDDL.addItem(retrieveHDB)
-            """elif 'addr:housename' in buildingName and 'addr:housenumber' in buildingName:
-                retrieveName = buildingName['addr:housename'] + " " + buildingName['addr:housenumber']
-                destinationDDL.addItem(retrieveName)"""
         destinationDDL.setFixedSize(180, 70)
-        #######################################################################################################################
-        # Create table
-        tableWidget = QTableWidget()
 
-        tableWidget.setRowCount(5)
-        tableWidget.setColumnCount(3)
+#######################################################################################################################
 
-        tableWidget.setItem(0, 0, QTableWidgetItem("Source"))
-        tableWidget.setItem(0, 1, QTableWidgetItem("Destination"))
-        tableWidget.setItem(0, 2, QTableWidgetItem("Distance"))
+        """# Create Checkbox
+        showBuilding = QtWidgets.QCheckBox("Buildings")
+        showBuilding.setFont(QtGui.QFont("Arial", 15, QtGui.QFont.Bold))
 
-        tableWidget.setFixedSize(800, 175)
-        tableWidget.setContentsMargins(10, 0, 10, 0)
+        showRoad = QtWidgets.QCheckBox("Roads")
+        showRoad.setFont(QtGui.QFont("Arial", 15, QtGui.QFont.Bold))"""
 
-        tableWidget.horizontalHeader().setStretchLastSection(True)
-        tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        # Set columns to read only, no editing
-        tableWidget.setEditTriggers(QtWidgets.QTableWidget.NoEditTriggers)
-        #######################################################################################################################
+#######################################################################################################################
+
         self.view = QtWebEngineWidgets.QWebEngineView()
         # set margin for the map (left, top, right, down)
         self.view.setContentsMargins(10, 10, 10, 5)
@@ -125,7 +113,6 @@ class Window(QMainWindow):
         nodeData = os.path.join('exportBuilding.geojson')
 
         geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
-
         geo_json.add_to(m)
         data = io.BytesIO()
         m.save(data, close_file=False)
@@ -151,11 +138,16 @@ class Window(QMainWindow):
         vlay.addWidget(button3)
         vlay.addStretch()
 
+        """checkbox_container = QtWidgets.QWidget()
+        checklay = QtWidgets.QHBoxLayout(checkbox_container)
+        checklay.addWidget(showBuilding)
+        checklay.addWidget(showRoad)"""
+
         # Create vertical layout container to contain map and table
         map_container = QtWidgets.QWidget()
         vlay = QtWidgets.QVBoxLayout(map_container)
+        # vlay.addWidget(checkbox_container)
         vlay.addWidget(self.view, stretch=1)
-        vlay.addWidget(tableWidget)
 
         lay.addWidget(controller_container)
         lay.addWidget(map_container)
