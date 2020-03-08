@@ -18,7 +18,7 @@ class Window(QMainWindow):
         # self.destination = QComboBox(self)
 
         # Set PyQt window size
-        self.title = "MAP PROJECT"
+        self.title = "Group P2-6 ICT 1008 PROJECT"
         self.left = 200
         self.top = 100
         self.width = 1800
