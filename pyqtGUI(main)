@@ -7,17 +7,21 @@ import folium
 from PyQt5 import QtWidgets, QtWebEngineWidgets, QtGui
 from PyQt5.QtWidgets import QMainWindow
 
+from Dijkstra import *
+
 
 class Window(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        # self.sourceLabel = QLabel(self)
-        # self.source = QComboBox(self)
-        # self.destinationLabel = QLabel(self)
-        # self.destination = QComboBox(self)
-
         # Set PyQt window size
+        self.pathLabel = QtWidgets.QLabel()
+        self.destinationLabel = QtWidgets.QLabel()
+        self.sourceLabel = QtWidgets.QLabel()
+        self.testLabel = QtWidgets.QLabel()
+        self.destinationDDL = QtWidgets.QComboBox()
+        self.sourceDDL = QtWidgets.QComboBox()
+        self.busPathDDL = QtWidgets.QComboBox()
         self.title = "Group P2-6 ICT 1008 PROJECT"
         self.left = 200
         self.top = 100
@@ -39,96 +43,79 @@ class Window(QMainWindow):
         self.show()
 
     def guiSettings(self):
-        # Create button
-        pathLabel = QtWidgets.QLabel()
-        pathLabel.setText("Select Paths:")
-        pathLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
-        pathLabel.setFixedSize(200, 30)
+        # Button Label
+        self.pathLabel.setText("Select Paths:")
+        self.pathLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
+        self.pathLabel.setFixedSize(200, 30)
 
-        walkingPathButton = QtWidgets.QPushButton(self.tr("Walking Path"))
+        walkingPathButton = QtWidgets.QPushButton("Walking Path")
         walkingPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
         walkingPathButton.setFixedSize(150, 50)
+        walkingPathButton.clicked.connect(self.retrieveLocation)
 
-        drivingPathButton = QtWidgets.QPushButton(self.tr("Driving path"))
+        drivingPathButton = QtWidgets.QPushButton("Driving path")
         drivingPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
         drivingPathButton.setFixedSize(150, 50)
 
-        fastestPathButton = QtWidgets.QPushButton(self.tr("Fastest path"))
+        fastestPathButton = QtWidgets.QPushButton("Fastest path")
         fastestPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
         fastestPathButton.setFixedSize(150, 50)
 
+        showBusPathButton = QtWidgets.QPushButton("Show Bus Path")
+        showBusPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
+        showBusPathButton.setFixedSize(150, 50)
+
+        #######################################################################################################################
 
         with open('exportBuilding.geojson') as access_json:
             read_content = json.load(access_json)
+            feature_access = read_content['features']
 
-        feature_access = read_content['features']
-        """for feature_data in feature_access:
-            property_data = feature_data['properties']
-            print(property_data)"""
+        # Source Label
+        self.sourceLabel.setText("SELECT SOURCE")
+        self.sourceLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
+        self.sourceLabel.setFixedSize(200, 30)
 
-#######################################################################################################################
+        # Destination Label
+        self.destinationLabel.setText("SELECT DESTINATION")
+        self.destinationLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
+        self.destinationLabel.setFixedSize(200, 30)
 
-        # Create drop drown List (source)
-        sourceLabel = QtWidgets.QLabel()
-        sourceLabel.setText("Select Source location")
-        sourceLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
-        sourceLabel.setFixedSize(200, 30)
+        self.testLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
+        self.testLabel.setFixedSize(200, 30)
 
-        sourceDDL = QtWidgets.QComboBox()
-        # Set font size
-        font = sourceDDL.font()
-        font.setPointSize(13)
-        sourceDDL.setFont(font)
-        # Retrieve names from json file
+        # Retrieve names from json file (Drop Down List)
         for feature_data in feature_access:
             buildingName = feature_data['properties']
             if 'name' in buildingName:
                 retrieveHDB = buildingName['name']
-                sourceDDL.addItem(retrieveHDB)
-        sourceDDL.setFixedSize(180, 70)
+                self.sourceDDL.addItem(retrieveHDB)
+                self.destinationDDL.addItem(retrieveHDB)
 
-        # Create drop down list (destination)
-        destinationLabel = QtWidgets.QLabel()
-        destinationLabel.setText("Select Destination location")
-        destinationLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
-        destinationLabel.setFixedSize(200, 30)
-
-        destinationDDL = QtWidgets.QComboBox()
         # Set font size
-        font = destinationDDL.font()
-        font.setPointSize(13)
-        destinationDDL.setFont(font)
-        # Retrieve names from json file
-        for feature_data in feature_access:
-            buildingName = feature_data['properties']
-            if 'name' in buildingName:
-                retrieveHDB = buildingName['name']
-                destinationDDL.addItem(retrieveHDB)
-        destinationDDL.setFixedSize(180, 70)
+        self.sourceDDL.setFixedSize(180, 70)
+        self.sourceDDL.setFont(QtGui.QFont("Arial", 13))
 
-#######################################################################################################################
+        self.destinationDDL.setFixedSize(180, 70)
+        self.destinationDDL.setFont(QtGui.QFont("Arial", 13))
 
-        """# Create Checkbox
-        showBuilding = QtWidgets.QCheckBox("Buildings")
-        showBuilding.setFont(QtGui.QFont("Arial", 15, QtGui.QFont.Bold))
+        self.busPathDDL.setFixedSize(180, 70)
+        self.busPathDDL.setFont(QtGui.QFont("Arial", 13))
 
-        showRoad = QtWidgets.QCheckBox("Roads")
-        showRoad.setFont(QtGui.QFont("Arial", 15, QtGui.QFont.Bold))"""
-
-#######################################################################################################################
+        #######################################################################################################################
 
         self.view = QtWebEngineWidgets.QWebEngineView()
         # set margin for the map (left, top, right, down)
         self.view.setContentsMargins(5, 10, 10, 5)
 
         # Creating Folium Map
-        m = folium.Map(location=[1.400150, 103.910172], titles="Punggol", zoom_start=17)
+        self.m = folium.Map(location=[1.400150, 103.910172], titles="Punggol", zoom_start=17)
         nodeData = os.path.join('exportBuilding.geojson')
 
         geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
-        geo_json.add_to(m)
+        geo_json.add_to(self.m)
         data = io.BytesIO()
-        m.save(data, close_file=False)
+        self.m.save(data, close_file=False)
         self.view.setHtml(data.getvalue().decode())
 
         # PyQt Horizontal Box layout
@@ -139,23 +126,19 @@ class Window(QMainWindow):
         # Create vertical layout container to contains all buttons, label, combobox, etc.
         controller_container = QtWidgets.QWidget()
         vlay = QtWidgets.QVBoxLayout(controller_container)
-        vlay.setSpacing(10)
-        vlay.addStretch()
-        vlay.addWidget(sourceLabel)
-        vlay.addWidget(sourceDDL)
-        vlay.addWidget(destinationLabel)
-        vlay.addWidget(destinationDDL)
-        vlay.addStretch()
-        vlay.addWidget(pathLabel)
+        vlay.addWidget(self.sourceLabel)
+        vlay.addWidget(self.sourceDDL)
+        vlay.addWidget(self.destinationLabel)
+        vlay.addWidget(self.destinationDDL)
+        vlay.addWidget(self.testLabel)
+        vlay.addWidget(self.pathLabel)
         vlay.addWidget(walkingPathButton)
         vlay.addWidget(drivingPathButton)
         vlay.addWidget(fastestPathButton)
         vlay.addStretch()
-
-        """checkbox_container = QtWidgets.QWidget()
-        checklay = QtWidgets.QHBoxLayout(checkbox_container)
-        checklay.addWidget(showBuilding)
-        checklay.addWidget(showRoad)"""
+        vlay.addWidget(self.busPathDDL)
+        vlay.addWidget(showBusPathButton)
+        vlay.addStretch()
 
         # Create vertical layout container to contain map and table
         map_container = QtWidgets.QWidget()
@@ -166,6 +149,49 @@ class Window(QMainWindow):
         lay.addWidget(controller_container)
         lay.addWidget(map_container)
 
+    #######################################################################################################################
+    def test(self):
+        src = self.sourceDDL.currentText()
+        with open('exportBuilding.geojson') as access_json:
+            read_content = json.load(access_json)
+            feature_access = read_content['features']
+
+            for feature_data in feature_access:
+                buildingName = feature_data['properties']
+                if buildingName['name'] == src:
+                    print(src)
+
+    def retrieveLocation(self):
+        self.m = folium.Map(location=[1.400150, 103.910172], zoom_start=17)
+        nodeData = os.path.join('exportBuilding.geojson')
+        geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
+        geo_json.add_to(self.m)
+        src = self.sourceDDL.currentText()
+        dest = self.destinationDDL.currentText()
+
+        nodes = {}
+        with open('exportBuilding.geojson') as access_json:
+            read_content = json.load(access_json)
+            feature_access = read_content['features']
+
+            for feature_data in feature_access:
+                buildingName = feature_data['properties']
+                if 'name' in buildingName:
+                    retrieveHDB = buildingName['name']
+                    nodes[retrieveHDB] = find_midpoint(feature_data['geometry']['coordinates'])
+
+        pathfinder = Dijkstra(nodes)
+        pathfinder.create_edges()
+        graph = pathfinder.build_graph()
+        path = pathfinder.find_shortest_path(graph, src, dest)
+
+        folium.PolyLine(path, opacity=1, color='red').add_to(self.m)
+        data = io.BytesIO()
+        self.m.save(data, close_file=False)
+        self.view.setHtml(data.getvalue().decode())
+
+
+#######################################################################################################################
 
 if __name__ == "__main__":
     App = QtWidgets.QApplication(sys.argv)
