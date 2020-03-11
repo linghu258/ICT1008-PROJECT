@@ -19,7 +19,6 @@ class Window(QMainWindow):
         self.pathLabel = QtWidgets.QLabel()
         self.destinationLabel = QtWidgets.QLabel()
         self.sourceLabel = QtWidgets.QLabel()
-        self.testLabel = QtWidgets.QLabel()
         self.destinationDDL = QtWidgets.QComboBox()
         self.sourceDDL = QtWidgets.QComboBox()
         self.busPathDDL = QtWidgets.QComboBox()
@@ -144,14 +143,9 @@ class Window(QMainWindow):
         vlay.addWidget(showBusPathButton)
         vlay.addStretch()
 
-        # Create vertical layout container to contain map and table
-        map_container = QtWidgets.QWidget()
-        vlay = QtWidgets.QVBoxLayout(map_container)
-        # vlay.addWidget(checkbox_container)
-        vlay.addWidget(self.view, stretch=1)
-
         lay.addWidget(controller_container)
-        lay.addWidget(map_container)
+        lay.addWidget(self.view, stretch=1)
+
 
 #######################################################################################################################
 
