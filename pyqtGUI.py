@@ -60,7 +60,7 @@ class Window(QMainWindow):
         drivingPathButton.setFixedSize(150, 80)
         drivingPathButton.setIcon(QtGui.QIcon("car.ico"))
         drivingPathButton.setIconSize(QtCore.QSize(30, 30))
-        drivingPathButton.clicked.connect(self.generateDrivingPath)
+        #drivingPathButton.clicked.connect(self.generateDrivingPath)
 
         fastestPathButton = QtWidgets.QPushButton("Fastest path")
         fastestPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
@@ -71,12 +71,17 @@ class Window(QMainWindow):
         showBusPathButton = QtWidgets.QPushButton("Show Bus Path")
         showBusPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
         showBusPathButton.setFixedSize(150, 70)
+        showBusPathButton.clicked.connect(self.generateBusServicePath)
 
 #######################################################################################################################
 
         with open('exportBuilding.geojson') as access_json:
             read_content = json.load(access_json)
             feature_access = read_content['features']
+
+        with open('BusPath/BusService.geojson') as access_json:
+            read_content = json.load(access_json)
+            bus_access = read_content['features']
 
         # Source Label
         self.sourceLabel.setText("SELECT SOURCE")
@@ -102,6 +107,13 @@ class Window(QMainWindow):
 
         self.destinationDDL.setFixedSize(180, 70)
         self.destinationDDL.setFont(QtGui.QFont("Arial", 13))
+
+        # Retrieve names from json file (Drop Down List)
+        for bus_data in bus_access:
+            bus_name = bus_data['properties']
+            if 'name' in bus_name:
+                retrieveBus = bus_name['name']
+                self.busPathDDL.addItem(retrieveBus)
 
         self.busPathDDL.setFixedSize(180, 70)
         self.busPathDDL.setFont(QtGui.QFont("Arial", 13))
@@ -146,7 +158,6 @@ class Window(QMainWindow):
         lay.addWidget(controller_container)
         lay.addWidget(self.view, stretch=1)
 
-
 #######################################################################################################################
 
     def generateWalkingPath(self):
@@ -178,35 +189,57 @@ class Window(QMainWindow):
         self.m.save(data, close_file=False)
         self.view.setHtml(data.getvalue().decode())
 
-    def generateDrivingPath(self):
+    # def generateDrivingPath(self):
+    #     self.m = folium.Map(location=[1.400150, 103.910172], zoom_start=17)
+    #     nodeData = os.path.join('exportBuilding.geojson')
+    #     geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
+    #     geo_json.add_to(self.m)
+    #     src = self.sourceDDL.currentText()
+    #     dest = self.destinationDDL.currentText()
+    #
+    #     with open('exportBuilding.geojson') as access_json:
+    #         read_content = json.load(access_json)
+    #         feature_access = read_content['features']
+    #
+    #         for feature_data in feature_access:
+    #             buildingName = feature_data['properties']
+    #             if buildingName['name'] == src:
+    #                 coord = feature_data['geometry']['coordinates']
+    #                 src_coord = coord[0][0]
+    #             if buildingName['name'] == dest:
+    #                 coord = feature_data['geometry']['coordinates']
+    #                 dest_coord = coord[0][0]
+    #
+    #     ox.config(log_console=True, use_cache=True)
+    #     G_walk = ox.graph_from_place(src, network_type='drive')
+    #     src_node = ox.get_nearest_node(G_walk, (src_coord[1], src_coord[0]))
+    #     dest_node = ox.get_nearest_node(G_walk, (dest_coord[1], dest_coord[0]))
+    #
+    #     route = nx.shortest_path(G_walk, src_node, dest_node, weight='length')
+    #
+    #     ox.plot_route_folium(G_walk, route).add_to(self.m)
+    #     data = io.BytesIO()
+    #     self.m.save(data, close_file=False)
+    #     self.view.setHtml(data.getvalue().decode())
+
+    def generateBusServicePath(self):
+        global busCoord
         self.m = folium.Map(location=[1.400150, 103.910172], zoom_start=17)
         nodeData = os.path.join('exportBuilding.geojson')
         geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
         geo_json.add_to(self.m)
-        src = self.sourceDDL.currentText()
-        dest = self.destinationDDL.currentText()
+        busPath = self.busPathDDL.currentText()
 
-        with open('exportBuilding.geojson') as access_json:
+        with open('BusPath/BusService.geojson') as access_json:
             read_content = json.load(access_json)
-            feature_access = read_content['features']
+            bus_access = read_content['features']
 
-            for feature_data in feature_access:
-                buildingName = feature_data['properties']
-                if buildingName['name'] == src:
-                    coord = feature_data['geometry']['coordinates']
-                    src_coord = coord[0][0]
-                if buildingName['name'] == dest:
-                    coord = feature_data['geometry']['coordinates']
-                    dest_coord = coord[0][0]
+        for bus_data in bus_access:
+            busName = bus_data['properties']
+            if busPath == busName['name']:
+                busCoord = [v[::-1] for v in bus_data['geometry']['coordinates'][0]]
 
-        ox.config(log_console=True, use_cache=True)
-        G_walk = ox.graph_from_place(src, network_type='drive')
-        src_node = ox.get_nearest_node(G_walk, (src_coord[1], src_coord[0]))
-        dest_node = ox.get_nearest_node(G_walk, (dest_coord[1], dest_coord[0]))
-
-        route = nx.shortest_path(G_walk, src_node, dest_node, weight='length')
-
-        ox.plot_route_folium(G_walk, route).add_to(self.m)
+        folium.PolyLine(busCoord, opacity=1, color='red').add_to(self.m)
         data = io.BytesIO()
         self.m.save(data, close_file=False)
         self.view.setHtml(data.getvalue().decode())
