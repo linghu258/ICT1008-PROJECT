@@ -226,20 +226,22 @@ class Window(QMainWindow):
                 data = json.load(json_file)
 
             for feature in data['features']:
-
+                
                 if feature['geometry']['type'] == 'MultiLineString':
-                    for i in range(len(feature['geometry']['coordinates'])):
-                        for y in feature['geometry']['coordinates'][i]:
-                            mrtPath.append(y)
+                    for y in feature['geometry']['coordinates']:
+                        print(y)
+                        mrtPath.append(y)
 
                 else:
                     coord = find_midpoint(feature['geometry']['coordinates'])
                     nodes[feature['id']] = coord
                     mrtNodes[tuple(coord)] = feature['id']
+                    
                     lowest = 999
                     lowestIndex = 0
-                    for i in range(len(mrtNodes)):
-                        d = calc_distance(coord, mrtNodes[i])
+                    for i in range(len(mrtPath)):
+                        print (mrtPath[i])
+                        d = calc_distance(coord, mrtPath[i])
                         if d < lowest:
                             lowest = d
                             lowestIndex = i
@@ -259,11 +261,11 @@ class Window(QMainWindow):
                 if i + 1 != length:
                     d = calc_distance(mrtPath[i], mrtPath[i + 1])
                     if tuple(mrtPath[i]) in mrtNodes:
-                        edges.append((mrtNodes[tuple(mrtPath[i])], temp[tuple(mrtPath[i + 1])], d / 30))
+                        edges.append((mrtNodes[tuple(mrtPath[i])], temp[tuple(mrtPath[i + 1])], d / 30 , "LRT" ))
                     elif tuple(mrtPath[i + 1]) in mrtNodes:
-                        edges.append((temp[tuple(mrtPath[i])], mrtNodes[tuple(mrtPath[i + 1])], d / 30))
+                        edges.append((temp[tuple(mrtPath[i])], mrtNodes[tuple(mrtPath[i + 1])], d / 30, "LRT"))
                     else:
-                        edges.append((temp[tuple(mrtPath[i])], temp[tuple(mrtPath[i + 1])], d / 30))
+                        edges.append((temp[tuple(mrtPath[i])], temp[tuple(mrtPath[i + 1])], d / 30, "LRT"))
 
             temp.clear()
             mrtPath.clear()

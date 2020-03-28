@@ -45,11 +45,18 @@ class Dijkstra:
         self.edges = []
         self.busnodes ={}
         self.busroutes = {}
+        self.mrtnodes = {}
+        self.mrtroutes ={}
 
     def create_bus_edgenodes(self, edges, busnodes,busroutes):
         self.edges = self.edges + edges
         self.busnodes = busnodes
         self.busroutes = busroutes
+
+    def create_mrt_edgenodes(self, edges, mrtnodes,mrtroutes):
+        self.edges = self.edges + edges
+        self.mrtnodes = mrtnodes
+        self.mrtroutes = mrtroutes
 
     # to be called by gui to create edges
     def create_edges(self):
@@ -83,8 +90,11 @@ class Dijkstra:
             if x[0] in self.nodes:
                 newpath.append(swap(self.nodes[x[0]]))
             elif x[0] in self.busnodes:
-
                 newpath.append(swap(self.busnodes[x[0]]))
+            elif x[0] in self.mrtnodes:
+                newpath.append(swap(self.mrtnodes[x[0]]))
+            elif x[1] == "LRT":
+                newpath.append(swap(self.mrtroutes[x[0]]))
             else:
                 newpath.append(swap(self.busroutes[x[0]]))
         return newpath
