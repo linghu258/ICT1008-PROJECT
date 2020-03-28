@@ -43,6 +43,13 @@ class Dijkstra:
     def __init__(self, nodes):
         self.nodes = nodes
         self.edges = []
+        self.busnodes ={}
+        self.busroutes = {}
+
+    def create_bus_edgenodes(self, edges, busnodes,busroutes):
+        self.edges = self.edges + edges
+        self.busnodes = busnodes
+        self.busroutes = busroutes
 
     # to be called by gui to create edges
     def create_edges(self):
@@ -70,8 +77,17 @@ class Dijkstra:
     def find_shortest_path(self, graph, src, dst):
         d, prev = dijkstra(graph, src, dst)
         path = find_path(prev, [dst, 'walk'])
-        path = [swap(self.nodes[x[0]]) for x in path]
-        return path
+        newpath=[]
+        print (path)
+        for x in path:
+            if x[0] in self.nodes:
+                newpath.append(swap(self.nodes[x[0]]))
+            elif x[0] in self.busnodes:
+
+                newpath.append(swap(self.busnodes[x[0]]))
+            else:
+                newpath.append(swap(self.busroutes[x[0]]))
+        return newpath
 
 # checks if it is a neighbour then return an edge , [src, dest,weight,modeoftravel]. Else return none
 

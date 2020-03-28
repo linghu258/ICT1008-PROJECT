@@ -4,11 +4,11 @@ import sys
 from PyQt5 import QtWidgets, QtWebEngineWidgets, QtGui
 from PyQt5.QtWidgets import QMainWindow
 from qtconsole.qt import QtCore
-
+from collections import OrderedDict
 from Dijkstra import *
 
-import osmnx as ox
-import networkx as nx
+# import osmnx as ox
+# import networkx as nx
 
 
 class Window(QMainWindow):
@@ -60,13 +60,14 @@ class Window(QMainWindow):
         drivingPathButton.setFixedSize(150, 80)
         drivingPathButton.setIcon(QtGui.QIcon("car.ico"))
         drivingPathButton.setIconSize(QtCore.QSize(30, 30))
-        #drivingPathButton.clicked.connect(self.generateDrivingPath)
+        # drivingPathButton.clicked.connect(self.generateDrivingPath)
 
         fastestPathButton = QtWidgets.QPushButton("Fastest path")
         fastestPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
         fastestPathButton.setIcon(QtGui.QIcon("bus.png"))
         fastestPathButton.setFixedSize(150, 80)
         fastestPathButton.setIconSize(QtCore.QSize(30, 30))
+        fastestPathButton.clicked.connect(self.generateFastestpath)
 
         showBusPathButton = QtWidgets.QPushButton("Show Bus Path")
         showBusPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
@@ -90,7 +91,8 @@ class Window(QMainWindow):
 
         # Destination Label
         self.destinationLabel.setText("SELECT DESTINATION")
-        self.destinationLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
+        self.destinationLabel.setFont(
+            QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
         self.destinationLabel.setFixedSize(200, 30)
 
         # Retrieve names from json file (Drop Down List)
@@ -125,10 +127,12 @@ class Window(QMainWindow):
         self.view.setContentsMargins(5, 10, 10, 5)
 
         # Creating Folium Map
-        self.m = folium.Map(location=[1.400150, 103.910172], titles="Punggol", zoom_start=17)
+        self.m = folium.Map(
+            location=[1.400150, 103.910172], titles="Punggol", zoom_start=17)
         nodeData = os.path.join('exportBuilding.geojson')
 
-        geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
+        geo_json = folium.GeoJson(
+            nodeData, popup=folium.GeoJsonPopup(fields=['name']))
         geo_json.add_to(self.m)
         data = io.BytesIO()
         self.m.save(data, close_file=False)
@@ -163,7 +167,8 @@ class Window(QMainWindow):
     def generateWalkingPath(self):
         self.m = folium.Map(location=[1.400150, 103.910172], zoom_start=17)
         nodeData = os.path.join('exportBuilding.geojson')
-        geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
+        geo_json = folium.GeoJson(
+            nodeData, popup=folium.GeoJsonPopup(fields=['name']))
         geo_json.add_to(self.m)
         src = self.sourceDDL.currentText()
         dest = self.destinationDDL.currentText()
@@ -177,10 +182,109 @@ class Window(QMainWindow):
                 buildingName = feature_data['properties']
                 if 'name' in buildingName:
                     retrieveHDB = buildingName['name']
-                    nodes[retrieveHDB] = find_midpoint(feature_data['geometry']['coordinates'])
+                    nodes[retrieveHDB] = find_midpoint(
+                        feature_data['geometry']['coordinates'])
 
         pathfinder = Dijkstra(nodes)
         pathfinder.create_edges()
+        graph = pathfinder.build_graph()
+        path = pathfinder.find_shortest_path(graph, src, dest)
+
+        folium.PolyLine(path, opacity=1, color='red').add_to(self.m)
+        data = io.BytesIO()
+        self.m.save(data, close_file=False)
+        self.view.setHtml(data.getvalue().decode())
+
+    def generateFastestpath(self):
+        self.m = folium.Map(
+                    location=[1.400150, 103.910172], zoom_start=17)
+        nodeData = os.path.join('exportBuilding.geojson')
+        geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
+        geo_json.add_to(self.m)
+        src = self.sourceDDL.currentText()
+        dest = self.destinationDDL.currentText()
+
+        nodes=OrderedDict()
+        edges=[]
+        buspath=[]
+        busroutes=OrderedDict()
+        busnode={}
+        temp ={}
+        filedir ="BUS ROUTES\\"
+        json_files = [pos_json for pos_json in os.listdir(filedir) if pos_json.endswith('.geojson')]
+
+        for f in json_files:
+
+            with open(filedir+f) as json_file:
+                data = json.load(json_file)
+
+            service = data['features'][0]['properties']['ref']
+            for feature in data['features']:
+                
+                if feature['geometry']['type'] == 'MultiLineString':
+                    for i in range(len( feature['geometry']['coordinates'])):
+                        for y in feature['geometry']['coordinates'][i]:
+                            buspath.append(y)
+
+                else:
+                    coord=feature['geometry']['coordinates']
+                    nodes[feature['id']] = coord
+                    busnode[tuple(coord)] = feature['id']
+                    lowest=999
+                    lowestIndex=0
+                    for i in range(len(buspath)):
+                        d = calc_distance(coord,buspath[i])
+                        if d < lowest:
+                            lowest = d
+                            lowestIndex= i
+                    buspath.insert(lowestIndex,coord)
+
+
+            length = len(buspath)
+            for i in range(length):
+                ##check if busstop
+                c = tuple(buspath[i])
+                if c in busnode:
+                    busroutes[busnode[c]] = c
+                    temp[c] = busnode[c]
+                    
+                else:
+                    k = str(service) + "-"+ str(i)
+                    busroutes[k] = c
+                    temp[c] = k
+
+
+            # complete dictionary
+
+            for i in range(length):
+                if i+1 !=length:
+                    d = calc_distance (buspath[i],buspath[i+1])
+                    if tuple(buspath[i])in busnode:
+                        edges.append((busnode[tuple(buspath[i])] , temp[tuple(buspath[i+1])] , d/30, service))
+                    elif tuple(buspath[i+1]) in busnode:
+                        edges.append((temp[tuple(buspath[i])] , busnode[tuple(buspath[i+1])] , d/30, service))
+                    else:
+                        edges.append((temp[tuple(buspath[i])] , temp[tuple(buspath[i+1])] , d/30, service))
+
+            temp.clear()
+            buspath.clear()
+
+        with open('exportBuilding.geojson') as access_json:
+            read_content = json.load(access_json)
+            feature_access = read_content['features']
+
+            for feature_data in feature_access:
+                buildingName = feature_data['properties']
+                if 'name' in buildingName:
+                    retrieveHDB = buildingName['name']
+                    nodes[retrieveHDB] = find_midpoint(feature_data['geometry']['coordinates'])
+                if 'addr:housenumber' in buildingName:
+                    retrieveHDB = buildingName['addr:housenumber']
+                    nodes[retrieveHDB] = find_midpoint(feature_data['geometry']['coordinates'])
+        
+        pathfinder = Dijkstra(nodes)
+        pathfinder.create_edges()
+        pathfinder.create_bus_edgenodes(edges,busnode,busroutes)
         graph = pathfinder.build_graph()
         path = pathfinder.find_shortest_path(graph, src, dest)
 
