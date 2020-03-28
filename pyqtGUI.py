@@ -7,6 +7,7 @@ from qtconsole.qt import QtCore
 from collections import OrderedDict
 from Dijkstra import *
 
+
 # import osmnx as ox
 # import networkx as nx
 
@@ -17,6 +18,7 @@ class Window(QMainWindow):
 
         # Set PyQt window size
         self.pathLabel = QtWidgets.QLabel()
+        self.buspathLabel = QtWidgets.QLabel()
         self.destinationLabel = QtWidgets.QLabel()
         self.sourceLabel = QtWidgets.QLabel()
         self.destinationDDL = QtWidgets.QComboBox()
@@ -37,9 +39,7 @@ class Window(QMainWindow):
         # self.setGeometry(self.left, self.top, self.width, self.height)
         # Disable PyQt 5 application from resizing
         self.setFixedSize(self.width, self.height)
-
         self.guiSettings()
-
         self.show()
 
     def guiSettings(self):
@@ -47,6 +47,10 @@ class Window(QMainWindow):
         self.pathLabel.setText("Select Paths:")
         self.pathLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
         self.pathLabel.setFixedSize(200, 30)
+
+        self.buspathLabel.setText("View Bus Service Paths:")
+        self.buspathLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
+        self.buspathLabel.setFixedSize(200, 30)
 
         walkingPathButton = QtWidgets.QPushButton("Walking Path")
         walkingPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
@@ -60,18 +64,18 @@ class Window(QMainWindow):
         drivingPathButton.setFixedSize(150, 80)
         drivingPathButton.setIcon(QtGui.QIcon("car.ico"))
         drivingPathButton.setIconSize(QtCore.QSize(30, 30))
-        # drivingPathButton.clicked.connect(self.generateDrivingPath)
+        drivingPathButton.clicked.connect(self.generateMrtPath)
 
-        fastestPathButton = QtWidgets.QPushButton("Fastest path")
+        fastestPathButton = QtWidgets.QPushButton("Bus path")
         fastestPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
         fastestPathButton.setIcon(QtGui.QIcon("bus.png"))
         fastestPathButton.setFixedSize(150, 80)
         fastestPathButton.setIconSize(QtCore.QSize(30, 30))
-        fastestPathButton.clicked.connect(self.generateFastestpath)
+        fastestPathButton.clicked.connect(self.generateBusPath)
 
-        showBusPathButton = QtWidgets.QPushButton("Show Bus Path")
+        showBusPathButton = QtWidgets.QPushButton("Bus Service Path")
         showBusPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
-        showBusPathButton.setFixedSize(150, 70)
+        showBusPathButton.setFixedSize(180, 70)
         showBusPathButton.clicked.connect(self.generateBusServicePath)
 
 #######################################################################################################################
@@ -155,6 +159,7 @@ class Window(QMainWindow):
         vlay.addWidget(drivingPathButton)
         vlay.addWidget(fastestPathButton)
         vlay.addStretch()
+        vlay.addWidget(self.buspathLabel)
         vlay.addWidget(self.busPathDDL)
         vlay.addWidget(showBusPathButton)
         vlay.addStretch()
@@ -163,7 +168,7 @@ class Window(QMainWindow):
         lay.addWidget(self.view, stretch=1)
 
 #######################################################################################################################
-
+    # Walking Path Function
     def generateWalkingPath(self):
         self.m = folium.Map(location=[1.400150, 103.910172], zoom_start=17)
         nodeData = os.path.join('exportBuilding.geojson')
@@ -195,76 +200,162 @@ class Window(QMainWindow):
         self.m.save(data, close_file=False)
         self.view.setHtml(data.getvalue().decode())
 
-    def generateFastestpath(self):
-        self.m = folium.Map(
-                    location=[1.400150, 103.910172], zoom_start=17)
+#######################################################################################################################
+
+    # Bus Path Function
+    def generateMrtPath(self):
+        self.m = folium.Map(location=[1.400150, 103.910172], zoom_start=17)
         nodeData = os.path.join('exportBuilding.geojson')
         geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
         geo_json.add_to(self.m)
         src = self.sourceDDL.currentText()
         dest = self.destinationDDL.currentText()
 
-        nodes=OrderedDict()
-        edges=[]
-        buspath=[]
-        busroutes=OrderedDict()
-        busnode={}
-        temp ={}
-        filedir ="BUS ROUTES\\"
+        nodes = OrderedDict()
+        edges = []
+        mrtPath = []
+        mrtRoutes = OrderedDict()  #
+        mrtNodes = {}
+        temp = {}
+        filedir = "MRT ROUTES\\"
         json_files = [pos_json for pos_json in os.listdir(filedir) if pos_json.endswith('.geojson')]
 
         for f in json_files:
 
-            with open(filedir+f) as json_file:
+            with open(filedir + f) as json_file:
                 data = json.load(json_file)
 
-            service = data['features'][0]['properties']['ref']
             for feature in data['features']:
-                
+
                 if feature['geometry']['type'] == 'MultiLineString':
-                    for i in range(len( feature['geometry']['coordinates'])):
+                    for i in range(len(feature['geometry']['coordinates'])):
                         for y in feature['geometry']['coordinates'][i]:
-                            buspath.append(y)
+                            mrtPath.append(y)
 
                 else:
-                    coord=feature['geometry']['coordinates']
+                    coord = find_midpoint(feature['geometry']['coordinates'])
                     nodes[feature['id']] = coord
-                    busnode[tuple(coord)] = feature['id']
-                    lowest=999
-                    lowestIndex=0
-                    for i in range(len(buspath)):
-                        d = calc_distance(coord,buspath[i])
+                    mrtNodes[tuple(coord)] = feature['id']
+                    lowest = 999
+                    lowestIndex = 0
+                    for i in range(len(mrtNodes)):
+                        d = calc_distance(coord, mrtNodes[i])
                         if d < lowest:
                             lowest = d
-                            lowestIndex= i
-                    buspath.insert(lowestIndex,coord)
+                            lowestIndex = i
+                    mrtPath.insert(lowestIndex, coord)
 
-
-            length = len(buspath)
+            length = len(mrtPath)
             for i in range(length):
-                ##check if busstop
-                c = tuple(buspath[i])
-                if c in busnode:
-                    busroutes[busnode[c]] = c
-                    temp[c] = busnode[c]
-                    
-                else:
-                    k = str(service) + "-"+ str(i)
-                    busroutes[k] = c
-                    temp[c] = k
-
+                # check if busstop
+                c = tuple(mrtPath[i])
+                k = str(i)
+                mrtRoutes[k] = c
+                temp[c] = k
 
             # complete dictionary
 
             for i in range(length):
-                if i+1 !=length:
-                    d = calc_distance (buspath[i],buspath[i+1])
-                    if tuple(buspath[i])in busnode:
-                        edges.append((busnode[tuple(buspath[i])] , temp[tuple(buspath[i+1])] , d/30, service))
-                    elif tuple(buspath[i+1]) in busnode:
-                        edges.append((temp[tuple(buspath[i])] , busnode[tuple(buspath[i+1])] , d/30, service))
+                if i + 1 != length:
+                    d = calc_distance(mrtPath[i], mrtPath[i + 1])
+                    if tuple(mrtPath[i]) in mrtNodes:
+                        edges.append((mrtNodes[tuple(mrtPath[i])], temp[tuple(mrtPath[i + 1])], d / 30))
+                    elif tuple(mrtPath[i + 1]) in mrtNodes:
+                        edges.append((temp[tuple(mrtPath[i])], mrtNodes[tuple(mrtPath[i + 1])], d / 30))
                     else:
-                        edges.append((temp[tuple(buspath[i])] , temp[tuple(buspath[i+1])] , d/30, service))
+                        edges.append((temp[tuple(mrtPath[i])], temp[tuple(mrtPath[i + 1])], d / 30))
+
+            temp.clear()
+            mrtPath.clear()
+
+        with open('exportBuilding.geojson') as access_json:
+            read_content = json.load(access_json)
+            feature_access = read_content['features']
+
+            for feature_data in feature_access:
+                buildingName = feature_data['properties']
+                if 'name' in buildingName:
+                    retrieveHDB = buildingName['name']
+                    nodes[retrieveHDB] = find_midpoint(feature_data['geometry']['coordinates'])
+
+        pathfinder = Dijkstra(nodes)
+        pathfinder.create_edges()
+        pathfinder.create_mrt_edgenodes(edges, mrtNodes, mrtRoutes)
+        graph = pathfinder.build_graph()
+        path = pathfinder.find_shortest_path(graph, src, dest)
+
+        folium.PolyLine(path, opacity=1, color='red').add_to(self.m)
+        data = io.BytesIO()
+        self.m.save(data, close_file=False)
+        self.view.setHtml(data.getvalue().decode())
+
+
+#######################################################################################################################
+
+    # Bus Path Function
+    def generateBusPath(self):
+        self.m = folium.Map(
+        location=[1.400150, 103.910172], zoom_start=17)
+        nodeData = os.path.join('exportBuilding.geojson')
+        geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
+        geo_json.add_to(self.m)
+        src = self.sourceDDL.currentText()
+        dest = self.destinationDDL.currentText()
+
+        nodes = OrderedDict()
+        edges = []
+        buspath = []
+        busroutes = OrderedDict() #
+        busnode = {}
+        temp = {}
+        filedir = "BUS ROUTES\\"
+        json_files = [pos_json for pos_json in os.listdir(filedir) if pos_json.endswith('.geojson')]
+
+        for f in json_files:
+
+            with open(filedir + f) as json_file:
+                data = json.load(json_file)
+
+            service = data['features'][0]['properties']['ref']
+            for feature in data['features']:
+
+                if feature['geometry']['type'] == 'MultiLineString':
+                    for i in range(len(feature['geometry']['coordinates'])):
+                        for y in feature['geometry']['coordinates'][i]:
+                            buspath.append(y)
+
+                else:
+                    coord = feature['geometry']['coordinates']
+                    nodes[feature['id']] = coord
+                    busnode[tuple(coord)] = feature['id']
+                    lowest = 999
+                    lowestIndex = 0
+                    for i in range(len(buspath)):
+                        d = calc_distance(coord, buspath[i])
+                        if d < lowest:
+                            lowest = d
+                            lowestIndex = i
+                    buspath.insert(lowestIndex, coord)
+
+            length = len(buspath)
+            for i in range(length):
+                # check if busstop
+                c = tuple(buspath[i])
+                k = str(service) + "-" + str(i)
+                busroutes[k] = c
+                temp[c] = k
+
+            # complete dictionary
+
+            for i in range(length):
+                if i + 1 != length:
+                    d = calc_distance(buspath[i], buspath[i + 1])
+                    if tuple(buspath[i]) in busnode:
+                        edges.append((busnode[tuple(buspath[i])], temp[tuple(buspath[i + 1])], d/30, service))
+                    elif tuple(buspath[i + 1]) in busnode:
+                        edges.append((temp[tuple(buspath[i])], busnode[tuple(buspath[i + 1])], d/30, service))
+                    else:
+                        edges.append((temp[tuple(buspath[i])], temp[tuple(buspath[i + 1])], d/30, service))
 
             temp.clear()
             buspath.clear()
@@ -278,13 +369,10 @@ class Window(QMainWindow):
                 if 'name' in buildingName:
                     retrieveHDB = buildingName['name']
                     nodes[retrieveHDB] = find_midpoint(feature_data['geometry']['coordinates'])
-                if 'addr:housenumber' in buildingName:
-                    retrieveHDB = buildingName['addr:housenumber']
-                    nodes[retrieveHDB] = find_midpoint(feature_data['geometry']['coordinates'])
-        
+
         pathfinder = Dijkstra(nodes)
         pathfinder.create_edges()
-        pathfinder.create_bus_edgenodes(edges,busnode,busroutes)
+        pathfinder.create_bus_edgenodes(edges, busnode, busroutes)
         graph = pathfinder.build_graph()
         path = pathfinder.find_shortest_path(graph, src, dest)
 
@@ -293,41 +381,10 @@ class Window(QMainWindow):
         self.m.save(data, close_file=False)
         self.view.setHtml(data.getvalue().decode())
 
-    # def generateDrivingPath(self):
-    #     self.m = folium.Map(location=[1.400150, 103.910172], zoom_start=17)
-    #     nodeData = os.path.join('exportBuilding.geojson')
-    #     geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
-    #     geo_json.add_to(self.m)
-    #     src = self.sourceDDL.currentText()
-    #     dest = self.destinationDDL.currentText()
-    #
-    #     with open('exportBuilding.geojson') as access_json:
-    #         read_content = json.load(access_json)
-    #         feature_access = read_content['features']
-    #
-    #         for feature_data in feature_access:
-    #             buildingName = feature_data['properties']
-    #             if buildingName['name'] == src:
-    #                 coord = feature_data['geometry']['coordinates']
-    #                 src_coord = coord[0][0]
-    #             if buildingName['name'] == dest:
-    #                 coord = feature_data['geometry']['coordinates']
-    #                 dest_coord = coord[0][0]
-    #
-    #     ox.config(log_console=True, use_cache=True)
-    #     G_walk = ox.graph_from_place(src, network_type='drive')
-    #     src_node = ox.get_nearest_node(G_walk, (src_coord[1], src_coord[0]))
-    #     dest_node = ox.get_nearest_node(G_walk, (dest_coord[1], dest_coord[0]))
-    #
-    #     route = nx.shortest_path(G_walk, src_node, dest_node, weight='length')
-    #
-    #     ox.plot_route_folium(G_walk, route).add_to(self.m)
-    #     data = io.BytesIO()
-    #     self.m.save(data, close_file=False)
-    #     self.view.setHtml(data.getvalue().decode())
+#######################################################################################################################
 
+    # Show Bus Service Path Function
     def generateBusServicePath(self):
-        global busCoord
         self.m = folium.Map(location=[1.400150, 103.910172], zoom_start=17)
         nodeData = os.path.join('exportBuilding.geojson')
         geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
@@ -347,6 +404,7 @@ class Window(QMainWindow):
         data = io.BytesIO()
         self.m.save(data, close_file=False)
         self.view.setHtml(data.getvalue().decode())
+
 
 #######################################################################################################################
 
