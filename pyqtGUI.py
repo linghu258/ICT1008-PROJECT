@@ -202,8 +202,10 @@ class Window(QMainWindow):
 
 #######################################################################################################################
 
-    # Bus Path Function
+    # Mrt Path Function
     def generateMrtPath(self):
+
+        ##initiliase GUI map
         self.m = folium.Map(location=[1.400150, 103.910172], zoom_start=17)
         nodeData = os.path.join('exportBuilding.geojson')
         geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
@@ -214,62 +216,84 @@ class Window(QMainWindow):
         nodes = OrderedDict()
         edges = []
         mrtPath = []
-        mrtRoutes = OrderedDict()  #
-        mrtNodes = {}
-        temp = {}
+        mrtRoutes = OrderedDict()  #containing routes
+        mrtNodes = {} #used for reverse finding
+        temp = {} #used for reverse finding of rotues
+
+        #get all the names of geojson files for mrt routes
         filedir = "MRT ROUTES\\"
         json_files = [pos_json for pos_json in os.listdir(filedir) if pos_json.endswith('.geojson')]
 
-        for f in json_files:
 
+        for f in json_files:
+            
+            #load the mrtroutes geojson file
             with open(filedir + f) as json_file:
                 data = json.load(json_file)
 
             for feature in data['features']:
                 
+                #if the first item is a multilinestring, AKA mrt route , then add it to a list called mrtpath
                 if feature['geometry']['type'] == 'MultiLineString':
                     for y in feature['geometry']['coordinates']:
                         print(y)
                         mrtPath.append(y)
-
                 else:
+                    #else it is a lrt node
+
+                    # step1 : find the midpoint of the polygon
                     coord = find_midpoint(feature['geometry']['coordinates'])
-                    nodes[feature['id']] = coord
-                    mrtNodes[tuple(coord)] = feature['id']
+                    # step2 :add the lrt node into the dictionary of nodes. k = name , v =coordinates
+                    nodes[feature['id']] = coord #
+                    mrtNodes[tuple(coord)] = feature['id'] #mrtNodes is reverse find , k=coordinates, v =name
                     
+                    #step 3: add the coordinates of the lrt node together with path. 
+                    #This is neccesary because the data set does not link the nodes and routes
                     lowest = 999
                     lowestIndex = 0
+
+                    #loops through the coordinates of the mrtpath
                     for i in range(len(mrtPath)):
-                        print (mrtPath[i])
+                        
+                        #find the shortest distance between the current lrt nodes and the path.
+                        # The shortest distance means that the mrt belongs in behind that coordinate
                         d = calc_distance(coord, mrtPath[i])
                         if d < lowest:
                             lowest = d
                             lowestIndex = i
-                    mrtPath.insert(lowestIndex, coord)
+                    mrtPath.insert(lowestIndex, coord) #insert the mrt node's coordinate into the mrtpath
 
+            
+    
             length = len(mrtPath)
             for i in range(length):
-                # check if busstop
                 c = tuple(mrtPath[i])
                 k = str(i)
-                mrtRoutes[k] = c
-                temp[c] = k
+                # key = i(a name for mrt path coordinates)
+                # value = coordinates 
+                mrtRoutes[k] = c 
+                temp[c] = k #for reverse finding path coordinates to get name
 
-            # complete dictionary
-
+            #creating edges for lrt 
             for i in range(length):
                 if i + 1 != length:
                     d = calc_distance(mrtPath[i], mrtPath[i + 1])
+                    #if the coordinates of the mrtpath is a lrt , then the next coordinate is a path
                     if tuple(mrtPath[i]) in mrtNodes:
                         edges.append((mrtNodes[tuple(mrtPath[i])], temp[tuple(mrtPath[i + 1])], d / 30 , "LRT" ))
+
+                    #else if the next coordinates of the mrtpath is a lrt, then the current coordinate is a path
                     elif tuple(mrtPath[i + 1]) in mrtNodes:
                         edges.append((temp[tuple(mrtPath[i])], mrtNodes[tuple(mrtPath[i + 1])], d / 30, "LRT"))
                     else:
+                        #else both are mrt path
                         edges.append((temp[tuple(mrtPath[i])], temp[tuple(mrtPath[i + 1])], d / 30, "LRT"))
 
             temp.clear()
             mrtPath.clear()
 
+
+        # initialise hdb nodes
         with open('exportBuilding.geojson') as access_json:
             read_content = json.load(access_json)
             feature_access = read_content['features']
@@ -280,12 +304,14 @@ class Window(QMainWindow):
                     retrieveHDB = buildingName['name']
                     nodes[retrieveHDB] = find_midpoint(feature_data['geometry']['coordinates'])
 
-        pathfinder = Dijkstra(nodes)
-        pathfinder.create_edges()
-        pathfinder.create_mrt_edgenodes(edges, mrtNodes, mrtRoutes)
-        graph = pathfinder.build_graph()
-        path = pathfinder.find_shortest_path(graph, src, dest)
+    
 
+        pathfinder = Dijkstra(nodes) #parse in the nodes of hdb and lrt
+        pathfinder.create_edges() #create edges
+        pathfinder.create_mrt_edgenodes(edges, mrtNodes, mrtRoutes) #create mrt edges
+        graph = pathfinder.build_graph()
+
+        path = pathfinder.find_shortest_path(graph, src, dest)
         folium.PolyLine(path, opacity=1, color='red').add_to(self.m)
         data = io.BytesIO()
         self.m.save(data, close_file=False)
@@ -296,6 +322,8 @@ class Window(QMainWindow):
 
     # Bus Path Function
     def generateBusPath(self):
+
+        # initiliase GUI map
         self.m = folium.Map(
         location=[1.400150, 103.910172], zoom_start=17)
         nodeData = os.path.join('exportBuilding.geojson')
@@ -307,61 +335,86 @@ class Window(QMainWindow):
         nodes = OrderedDict()
         edges = []
         buspath = []
-        busroutes = OrderedDict() #
-        busnode = {}
-        temp = {}
+        busroutes = OrderedDict() #containing routes
+        busnode = {} #containing busnode
+        temp = {}#used for reverse finding
+
+        #get all the names of geojson files for bus routes
         filedir = "BUS ROUTES\\"
         json_files = [pos_json for pos_json in os.listdir(filedir) if pos_json.endswith('.geojson')]
 
+
+        #for file service
         for f in json_files:
 
             with open(filedir + f) as json_file:
                 data = json.load(json_file)
 
+            #get the bus service number
             service = data['features'][0]['properties']['ref']
+            
+            
             for feature in data['features']:
-
+                #if the first item is a multilinestring, AKA mrt route , then add it to a list called buspath
                 if feature['geometry']['type'] == 'MultiLineString':
                     for i in range(len(feature['geometry']['coordinates'])):
                         for y in feature['geometry']['coordinates'][i]:
                             buspath.append(y)
 
                 else:
+                    #else it is a bus node
+
                     coord = feature['geometry']['coordinates']
+                    #add the bus node into dictionary of nodes
                     nodes[feature['id']] = coord
+                    #busnode is used for reverse finding
                     busnode[tuple(coord)] = feature['id']
+                    
+                    #add the coordinates of the lrt node together with path. 
+                    #This is neccesary because the data set does not link the nodes and routes
                     lowest = 999
                     lowestIndex = 0
                     for i in range(len(buspath)):
+
+                         #find the shortest distance between the current bus nodes and the path.
+                        # The shortest distance means that the bus belongs in behind that coordinate
                         d = calc_distance(coord, buspath[i])
                         if d < lowest:
                             lowest = d
                             lowestIndex = i
                     buspath.insert(lowestIndex, coord)
+                    #insert the busnode's coordinate into the mrtpath
 
             length = len(buspath)
             for i in range(length):
-                # check if busstop
                 c = tuple(buspath[i])
                 k = str(service) + "-" + str(i)
+                # key = service number + counter(for the routes coordinate)
+                # value = coordinates 
+
                 busroutes[k] = c
                 temp[c] = k
+                #for reverse finding path coordinates to get name
 
-            # complete dictionary
-
+            #creating edges for bus. Time is used for the weights
             for i in range(length):
                 if i + 1 != length:
                     d = calc_distance(buspath[i], buspath[i + 1])
                     if tuple(buspath[i]) in busnode:
+                        #if the coordinates of the buspath is a busstop , then the next coordinate is a path
                         edges.append((busnode[tuple(buspath[i])], temp[tuple(buspath[i + 1])], d/30, service))
+
+                    #else if the next coordinates of the buspath is a busnode, then the current coordinate is a path
                     elif tuple(buspath[i + 1]) in busnode:
                         edges.append((temp[tuple(buspath[i])], busnode[tuple(buspath[i + 1])], d/30, service))
                     else:
+                        #else both are bus paths
                         edges.append((temp[tuple(buspath[i])], temp[tuple(buspath[i + 1])], d/30, service))
 
             temp.clear()
             buspath.clear()
 
+        ##initialise hdb nodes
         with open('exportBuilding.geojson') as access_json:
             read_content = json.load(access_json)
             feature_access = read_content['features']
@@ -372,9 +425,11 @@ class Window(QMainWindow):
                     retrieveHDB = buildingName['name']
                     nodes[retrieveHDB] = find_midpoint(feature_data['geometry']['coordinates'])
 
-        pathfinder = Dijkstra(nodes)
-        pathfinder.create_edges()
-        pathfinder.create_bus_edgenodes(edges, busnode, busroutes)
+
+    
+        pathfinder = Dijkstra(nodes)#parse in the nodes of hdb and busstops
+        pathfinder.create_edges()#create walk edges
+        pathfinder.create_bus_edgenodes(edges, busnode, busroutes) #create bus edges
         graph = pathfinder.build_graph()
         path = pathfinder.find_shortest_path(graph, src, dest)
 
