@@ -1,5 +1,9 @@
+import folium
+import os
+import json
 import io
 import sys
+import time
 
 from PyQt5 import QtWidgets, QtWebEngineWidgets, QtGui
 from PyQt5.QtWidgets import QMainWindow
@@ -8,17 +12,13 @@ from collections import OrderedDict
 from Dijkstra import *
 
 
-# import osmnx as ox
-# import networkx as nx
-
-
 class Window(QMainWindow):
     def __init__(self):
         super().__init__()
 
         # Set PyQt window size
         self.pathLabel = QtWidgets.QLabel()
-        self.buspathLabel = QtWidgets.QLabel()
+        self.transPathLabel = QtWidgets.QLabel()
         self.destinationLabel = QtWidgets.QLabel()
         self.sourceLabel = QtWidgets.QLabel()
         self.destinationDDL = QtWidgets.QComboBox()
@@ -48,33 +48,34 @@ class Window(QMainWindow):
         self.pathLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
         self.pathLabel.setFixedSize(200, 30)
 
-        self.buspathLabel.setText("View Bus Service Paths:")
-        self.buspathLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
-        self.buspathLabel.setFixedSize(200, 30)
-
         walkingPathButton = QtWidgets.QPushButton("Walking Path")
         walkingPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
         walkingPathButton.setFixedSize(150, 80)
-        walkingPathButton.setIcon(QtGui.QIcon("walk.png"))
+        walkingPathButton.setIcon(QtGui.QIcon("image/walk.png"))
         walkingPathButton.setIconSize(QtCore.QSize(30, 30))
         walkingPathButton.clicked.connect(self.generateWalkingPath)
 
-        drivingPathButton = QtWidgets.QPushButton("Driving path")
-        drivingPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
-        drivingPathButton.setFixedSize(150, 80)
-        drivingPathButton.setIcon(QtGui.QIcon("car.ico"))
-        drivingPathButton.setIconSize(QtCore.QSize(30, 30))
-        drivingPathButton.clicked.connect(self.generateMrtPath)
+        busPathButton = QtWidgets.QPushButton("Bus path")
+        busPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
+        busPathButton.setIcon(QtGui.QIcon("image/bus.png"))
+        busPathButton.setFixedSize(150, 80)
+        busPathButton.setIconSize(QtCore.QSize(30, 30))
+        busPathButton.clicked.connect(self.generateBusPath)
 
-        fastestPathButton = QtWidgets.QPushButton("Bus path")
-        fastestPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
-        fastestPathButton.setIcon(QtGui.QIcon("bus.png"))
-        fastestPathButton.setFixedSize(150, 80)
-        fastestPathButton.setIconSize(QtCore.QSize(30, 30))
-        fastestPathButton.clicked.connect(self.generateBusPath)
+        mrtPathButton = QtWidgets.QPushButton("Mrt path")
+        mrtPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
+        mrtPathButton.setIcon(QtGui.QIcon("image/mrt.png"))
+        mrtPathButton.setFixedSize(150, 80)
+        mrtPathButton.setIconSize(QtCore.QSize(30, 30))
+        mrtPathButton.clicked.connect(self.generateMrtPath)
+
+        self.transPathLabel.setText("View Transport Service Paths:")
+        self.transPathLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
+        self.transPathLabel.setFixedSize(200, 30)
 
         showBusPathButton = QtWidgets.QPushButton("Bus Service Path")
         showBusPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
+        showBusPathButton.setIcon(QtGui.QIcon("image/bus.png"))
         showBusPathButton.setFixedSize(180, 70)
         showBusPathButton.clicked.connect(self.generateBusServicePath)
 
@@ -83,10 +84,6 @@ class Window(QMainWindow):
         with open('exportBuilding.geojson') as access_json:
             read_content = json.load(access_json)
             feature_access = read_content['features']
-
-        with open('BusPath/BusService.geojson') as access_json:
-            read_content = json.load(access_json)
-            bus_access = read_content['features']
 
         # Source Label
         self.sourceLabel.setText("SELECT SOURCE")
@@ -113,6 +110,10 @@ class Window(QMainWindow):
 
         self.destinationDDL.setFixedSize(180, 70)
         self.destinationDDL.setFont(QtGui.QFont("Arial", 13))
+
+        with open('BusPath/BusService.geojson') as access_json:
+            read_content = json.load(access_json)
+            bus_access = read_content['features']
 
         # Retrieve names from json file (Drop Down List)
         for bus_data in bus_access:
@@ -156,10 +157,10 @@ class Window(QMainWindow):
         vlay.addWidget(self.destinationDDL)
         vlay.addWidget(self.pathLabel)
         vlay.addWidget(walkingPathButton)
-        vlay.addWidget(drivingPathButton)
-        vlay.addWidget(fastestPathButton)
+        vlay.addWidget(busPathButton)
+        vlay.addWidget(mrtPathButton)
         vlay.addStretch()
-        vlay.addWidget(self.buspathLabel)
+        vlay.addWidget(self.transPathLabel)
         vlay.addWidget(self.busPathDDL)
         vlay.addWidget(showBusPathButton)
         vlay.addStretch()
@@ -170,6 +171,8 @@ class Window(QMainWindow):
 #######################################################################################################################
     # Walking Path Function
     def generateWalkingPath(self):
+        run_time = time.time()
+
         self.m = folium.Map(location=[1.400150, 103.910172], zoom_start=17)
         nodeData = os.path.join('exportBuilding.geojson')
         geo_json = folium.GeoJson(
@@ -200,10 +203,14 @@ class Window(QMainWindow):
         self.m.save(data, close_file=False)
         self.view.setHtml(data.getvalue().decode())
 
+        print("----------------- Run Time ------------------")
+        print("--- %s seconds ---" % (time.time() - run_time))
+
 #######################################################################################################################
 
     # Mrt Path Function
     def generateMrtPath(self):
+        run_time = time.time()
 
         ##initiliase GUI map
         self.m = folium.Map(location=[1.400150, 103.910172], zoom_start=17)
@@ -216,82 +223,77 @@ class Window(QMainWindow):
         nodes = OrderedDict()
         edges = []
         mrtPath = []
-        mrtRoutes = OrderedDict()  #containing routes
-        mrtNodes = {} #used for reverse finding
-        temp = {} #used for reverse finding of rotues
+        mrtRoutes = OrderedDict()  # containing routes
+        mrtNodes = {}  # used for reverse finding
+        temp = {}  # used for reverse finding of rotues
 
-        #get all the names of geojson files for mrt routes
+        # get all the names of geojson files for mrt routes
         filedir = "MRT ROUTES\\"
         json_files = [pos_json for pos_json in os.listdir(filedir) if pos_json.endswith('.geojson')]
 
-
         for f in json_files:
-            
-            #load the mrtroutes geojson file
+
+            # load the mrtroutes geojson file
             with open(filedir + f) as json_file:
                 data = json.load(json_file)
 
             for feature in data['features']:
-                
-                #if the first item is a multilinestring, AKA mrt route , then add it to a list called mrtpath
+
+                # if the first item is a multilinestring, AKA mrt route , then add it to a list called mrtpath
                 if feature['geometry']['type'] == 'MultiLineString':
                     for y in feature['geometry']['coordinates']:
-                        print(y)
                         mrtPath.append(y)
                 else:
-                    #else it is a lrt node
+                    # else it is a lrt node
 
                     # step1 : find the midpoint of the polygon
                     coord = find_midpoint(feature['geometry']['coordinates'])
                     # step2 :add the lrt node into the dictionary of nodes. k = name , v =coordinates
-                    nodes[feature['id']] = coord #
-                    mrtNodes[tuple(coord)] = feature['id'] #mrtNodes is reverse find , k=coordinates, v =name
-                    
-                    #step 3: add the coordinates of the lrt node together with path. 
-                    #This is neccesary because the data set does not link the nodes and routes
+                    nodes[feature['id']] = coord  #
+                    mrtNodes[tuple(coord)] = feature['id']  # mrtNodes is reverse find , k=coordinates, v =name
+
+                    # step 3: add the coordinates of the lrt node together with path.
+                    # This is neccesary because the data set does not link the nodes and routes
                     lowest = 999
                     lowestIndex = 0
 
-                    #loops through the coordinates of the mrtpath
+                    # loops through the coordinates of the mrtpath
                     for i in range(len(mrtPath)):
-                        
-                        #find the shortest distance between the current lrt nodes and the path.
+
+                        # find the shortest distance between the current lrt nodes and the path.
                         # The shortest distance means that the mrt belongs in behind that coordinate
                         d = calc_distance(coord, mrtPath[i])
                         if d < lowest:
                             lowest = d
                             lowestIndex = i
-                    mrtPath.insert(lowestIndex, coord) #insert the mrt node's coordinate into the mrtpath
+                    mrtPath.insert(lowestIndex, coord)  # insert the mrt node's coordinate into the mrtpath
 
-            
-    
             length = len(mrtPath)
             for i in range(length):
                 c = tuple(mrtPath[i])
                 k = str(i)
                 # key = i(a name for mrt path coordinates)
-                # value = coordinates 
-                mrtRoutes[k] = c 
-                temp[c] = k #for reverse finding path coordinates to get name
+                # value = coordinates
+                mrtRoutes[k] = c
+                temp[c] = k  # for reverse finding path coordinates to get name
 
-            #creating edges for lrt 
+            # creating edges for lrt
             for i in range(length):
                 if i + 1 != length:
                     d = calc_distance(mrtPath[i], mrtPath[i + 1])
-                    #if the coordinates of the mrtpath is a lrt , then the next coordinate is a path
+                    # if the coordinates of the mrtpath is a lrt , then the next coordinate is a path
                     if tuple(mrtPath[i]) in mrtNodes:
-                        edges.append((mrtNodes[tuple(mrtPath[i])], temp[tuple(mrtPath[i + 1])], d / 30 , "LRT" ))
+                        edges.append((mrtNodes[tuple(mrtPath[i])], temp[tuple(mrtPath[i + 1])], d / 30, "LRT"))
 
-                    #else if the next coordinates of the mrtpath is a lrt, then the current coordinate is a path
+                    # else if the next coordinates of the mrtpath is a lrt, then the current coordinate is a path
                     elif tuple(mrtPath[i + 1]) in mrtNodes:
                         edges.append((temp[tuple(mrtPath[i])], mrtNodes[tuple(mrtPath[i + 1])], d / 30, "LRT"))
                     else:
-                        #else both are mrt path
+                        # else both are mrt path
                         edges.append((temp[tuple(mrtPath[i])], temp[tuple(mrtPath[i + 1])], d / 30, "LRT"))
 
             temp.clear()
             mrtPath.clear()
-
 
         # initialise hdb nodes
         with open('exportBuilding.geojson') as access_json:
@@ -304,11 +306,9 @@ class Window(QMainWindow):
                     retrieveHDB = buildingName['name']
                     nodes[retrieveHDB] = find_midpoint(feature_data['geometry']['coordinates'])
 
-    
-
-        pathfinder = Dijkstra(nodes) #parse in the nodes of hdb and lrt
-        pathfinder.create_edges() #create edges
-        pathfinder.create_mrt_edgenodes(edges, mrtNodes, mrtRoutes) #create mrt edges
+        pathfinder = Dijkstra(nodes)  # parse in the nodes of hdb and lrt
+        pathfinder.create_edges()  # create edges
+        pathfinder.create_mrt_edgenodes(edges, mrtNodes, mrtRoutes)  # create mrt edges
         graph = pathfinder.build_graph()
 
         path = pathfinder.find_shortest_path(graph, src, dest)
@@ -317,15 +317,18 @@ class Window(QMainWindow):
         self.m.save(data, close_file=False)
         self.view.setHtml(data.getvalue().decode())
 
+        print("----------------- Run Time ------------------")
+        print("--- %s seconds ---" % (time.time() - run_time))
 
 #######################################################################################################################
 
     # Bus Path Function
     def generateBusPath(self):
+        run_time = time.time()
 
         # initiliase GUI map
         self.m = folium.Map(
-        location=[1.400150, 103.910172], zoom_start=17)
+            location=[1.400150, 103.910172], zoom_start=17)
         nodeData = os.path.join('exportBuilding.geojson')
         geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
         geo_json.add_to(self.m)
@@ -335,81 +338,79 @@ class Window(QMainWindow):
         nodes = OrderedDict()
         edges = []
         buspath = []
-        busroutes = OrderedDict() #containing routes
-        busnode = {} #containing busnode
-        temp = {}#used for reverse finding
+        busroutes = OrderedDict()  # containing routes
+        busnode = {}  # containing busnode
+        temp = {}  # used for reverse finding
 
-        #get all the names of geojson files for bus routes
+        # get all the names of geojson files for bus routes
         filedir = "BUS ROUTES\\"
         json_files = [pos_json for pos_json in os.listdir(filedir) if pos_json.endswith('.geojson')]
 
-
-        #for file service
+        # for file service
         for f in json_files:
 
             with open(filedir + f) as json_file:
                 data = json.load(json_file)
 
-            #get the bus service number
+            # get the bus service number
             service = data['features'][0]['properties']['ref']
-            
-            
+
             for feature in data['features']:
-                #if the first item is a multilinestring, AKA mrt route , then add it to a list called buspath
+                # if the first item is a multilinestring, AKA mrt route , then add it to a list called buspath
                 if feature['geometry']['type'] == 'MultiLineString':
                     for i in range(len(feature['geometry']['coordinates'])):
                         for y in feature['geometry']['coordinates'][i]:
                             buspath.append(y)
 
                 else:
-                    #else it is a bus node
+                    # else it is a bus node
 
                     coord = feature['geometry']['coordinates']
-                    #add the bus node into dictionary of nodes
+                    # add the bus node into dictionary of nodes
                     nodes[feature['id']] = coord
-                    #busnode is used for reverse finding
+                    # busnode is used for reverse finding
                     busnode[tuple(coord)] = feature['id']
-                    
-                    #add the coordinates of the lrt node together with path. 
-                    #This is neccesary because the data set does not link the nodes and routes
+
+                    # add the coordinates of the lrt node together with path.
+                    # This is neccesary because the data set does not link the nodes and routes
                     lowest = 999
                     lowestIndex = 0
                     for i in range(len(buspath)):
 
-                         #find the shortest distance between the current bus nodes and the path.
+                        # find the shortest distance between the current bus nodes and the path.
                         # The shortest distance means that the bus belongs in behind that coordinate
                         d = calc_distance(coord, buspath[i])
                         if d < lowest:
                             lowest = d
                             lowestIndex = i
                     buspath.insert(lowestIndex, coord)
-                    #insert the busnode's coordinate into the mrtpath
+                    # insert the busnode's coordinate into the mrtpath
 
             length = len(buspath)
             for i in range(length):
                 c = tuple(buspath[i])
                 k = str(service) + "-" + str(i)
                 # key = service number + counter(for the routes coordinate)
-                # value = coordinates 
+                # value = coordinates
 
                 busroutes[k] = c
                 temp[c] = k
-                #for reverse finding path coordinates to get name
+                # for reverse finding path coordinates to get name
 
-            #creating edges for bus. Time is used for the weights
+            # creating edges for bus. Time is used for the weights
             for i in range(length):
                 if i + 1 != length:
                     d = calc_distance(buspath[i], buspath[i + 1])
                     if tuple(buspath[i]) in busnode:
-                        #if the coordinates of the buspath is a busstop , then the next coordinate is a path
-                        edges.append((busnode[tuple(buspath[i])], temp[tuple(buspath[i + 1])], d/30, service))
+                        # if the coordinates of the buspath is a busstop , then the next coordinate is a path
+                        edges.append((busnode[tuple(buspath[i])], temp[tuple(buspath[i + 1])], d / 30, service))
 
-                    #else if the next coordinates of the buspath is a busnode, then the current coordinate is a path
+                    # else if the next coordinates of the buspath is a busnode, then the current coordinate is a path
                     elif tuple(buspath[i + 1]) in busnode:
-                        edges.append((temp[tuple(buspath[i])], busnode[tuple(buspath[i + 1])], d/30, service))
+                        edges.append((temp[tuple(buspath[i])], busnode[tuple(buspath[i + 1])], d / 30, service))
                     else:
-                        #else both are bus paths
-                        edges.append((temp[tuple(buspath[i])], temp[tuple(buspath[i + 1])], d/30, service))
+                        # else both are bus paths
+                        edges.append((temp[tuple(buspath[i])], temp[tuple(buspath[i + 1])], d / 30, service))
 
             temp.clear()
             buspath.clear()
@@ -425,11 +426,9 @@ class Window(QMainWindow):
                     retrieveHDB = buildingName['name']
                     nodes[retrieveHDB] = find_midpoint(feature_data['geometry']['coordinates'])
 
-
-    
-        pathfinder = Dijkstra(nodes)#parse in the nodes of hdb and busstops
-        pathfinder.create_edges()#create walk edges
-        pathfinder.create_bus_edgenodes(edges, busnode, busroutes) #create bus edges
+        pathfinder = Dijkstra(nodes)  # parse in the nodes of hdb and busstops
+        pathfinder.create_edges()  # create walk edges
+        pathfinder.create_bus_edgenodes(edges, busnode, busroutes)  # create bus edges
         graph = pathfinder.build_graph()
         path = pathfinder.find_shortest_path(graph, src, dest)
 
@@ -438,7 +437,10 @@ class Window(QMainWindow):
         self.m.save(data, close_file=False)
         self.view.setHtml(data.getvalue().decode())
 
-#######################################################################################################################
+        print("----------------- Run Time ------------------")
+        print("--- %s seconds ---" % (time.time() - run_time))
+
+    #######################################################################################################################
 
     # Show Bus Service Path Function
     def generateBusServicePath(self):
