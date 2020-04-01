@@ -1,13 +1,11 @@
 import math
 
-
 from collections import defaultdict
 
 MAX_WALK_RANGE = 0.08  # km
 WALK_SPEED = 5.0  # km
 BUS_SPEED = 30.0  # km
 MRT_SPEED = 80.0  # km
-
 
 class Dijkstra:
 
@@ -34,15 +32,12 @@ class Dijkstra:
         self.mrtnodes = mrtnodes
         self.mrtroutes = mrtroutes
 
-    # to be called by gui to create walking edges
+    # to be called by gui to create edges
     def create_edges(self):
-
         # for every node in the dictionary of nodes
         for k1, v1 in self.nodes.items():
-
             # checks all the nodes in the dictionary of they are neighbor
             for k2, v2 in self.nodes.items():
-
                 # checks if the two nodes are neighbor, if true then create a walking edge between the 2 of them.
                 edge = add_neighbour(k1, v1, k2, v2)
                 if edge is not None:
@@ -56,38 +51,40 @@ class Dijkstra:
 
         # for every edge in the list of edges
         for src, dst, weight, mode in self.edges:
-
             # checking for duplicated edge entries
             seen_edges[(src, dst, weight)] += 1
             if seen_edges[(src, dst, weight)] > 1:  # dont add to graph if duplicated
                 continue
-            graph[src].append([dst, weight, mode])  # add edge to graph
+            graph[src].append([dst, weight, mode]) # add edge to graph
+            # remove this line of edge list is directed
+            graph[dst].append([src, weight, mode])
 
         return graph
 
     # function to be called by gui to find path from src to dst, returns a list of coordinates for plotting lines
     def find_shortest_path(self, graph, src, dst):
         d, prev = dijkstra(graph, src, dst)
-        path = find_path(prev, [dst, 'walk'])  # recieves a list of names of the path traveled
+        path = find_path(prev, [dst, 'walk'])
         newpath = []
         print(path)
 
         # for every node in the path , get the coordinates of the node and add it into newpath
         # swap is used to change the order of long, lat to lat, long
         for x in path:
-            if x[0] in self.nodes:  # if it is a hdb
+            if x[0] in self.nodes:
                 newpath.append(swap(self.nodes[x[0]]))
-            elif x[0] in self.busnodes:  # if it is a busstop
+            elif x[0] in self.busnodes:
                 newpath.append(swap(self.busnodes[x[0]]))
-            elif x[0] in self.mrtnodes:  # if it is mrt nodes
+            elif x[0] in self.mrtnodes:
                 newpath.append(swap(self.mrtnodes[x[0]]))
-            elif x[1] == "LRT":  # if it is a mrt route
+            elif x[1] == "LRT":
                 newpath.append(swap(self.mrtroutes[x[0]]))
-            else:  # then it is definetly a buspath
+            else:
                 newpath.append(swap(self.busroutes[x[0]]))
         return newpath
 
-    # checks if it is a neighbour then return an edge , [src, dest,weight,modeoftravel]. Else return none
+
+# checks if it is a neighbour then return an edge , [src, dest,weight,modeoftravel]. Else return none
 
 
 def add_neighbour(k1, v1, k2, v2):
@@ -118,12 +115,12 @@ def dijkstra(graph, src, dst=None):
         dist[n] = float('inf')
         prev[n] = None
 
-    dist[src] = 0  # initialise starting point as 0 cost
+    dist[src] = 0 # initialise starting point as 0 cost
 
     # while the queue is not empty
     while q:
-        u = min(q, key=dist.get)  # get the lowest cost out of all the edges
-        q.remove(u)  # remove the first item
+        u = min(q, key=dist.get) # get the lowest cost out of all the edges
+        q.remove(u) # remove the first item
 
         # if the item removed is the destination then return the distance and all the previous nodes taken
         if dst is not None and u == dst:
@@ -134,10 +131,9 @@ def dijkstra(graph, src, dst=None):
 
             # add the weight of the edge into the existing cost
             alt = dist[u] + w
-
             # checks if the cost is lesser then the previously existing cost
             if alt < dist[v]:
-                dist[v] = alt  # new cost
+                dist[v] = alt
                 prev[v] = [u, mode]
 
     return dist, prev
@@ -145,6 +141,7 @@ def dijkstra(graph, src, dst=None):
 
 def find_path(pr, node):  # generate path list based on parent points 'prev'
     p = []
+
     while node is not None:
         p.append(node)
         node = pr[node[0]]
@@ -182,3 +179,4 @@ def calc_distance(src, dest):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     d = radius * c
     return d
+
