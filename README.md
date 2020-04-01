@@ -15,7 +15,7 @@ $ conda install -c conda-forge folium
 
 3) Locate the folium folder YOU had initially installed
 
-<img src="image/find_folium_folder.png" width="700" height="500" >
+<img src="Git-Image/Step 3.png" width="700" height="500" >
 
 4) Repalce your folium folder with the folium folder that you have just installed from this repository
 
