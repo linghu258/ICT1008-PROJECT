@@ -4,7 +4,7 @@
 
 **REQUIRED TO RUN OUR APPLICATION - UPDATE FOLIUM FILE**
 
-1) **Download this repository**
+1) **Download repository**
 <img src="Git-Image/Step 1.PNG" width="700" height="500" >
 
 2) **Unzip the folder**
