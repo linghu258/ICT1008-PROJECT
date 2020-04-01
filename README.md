@@ -10,10 +10,10 @@
 
 3) Placed the Folium folder into your project interpreter 
 
-EXAMPLE:
-
-
 <img src="Git-Image/Folium_folder.PNG" width="700" height="500" >
 
+In my case, I am using anaconda as my project interpretor in PyCharm
 
-5) If all were done correctly, there should not be any error running the application. Thanks
+<img src="Git-Image/project_interpreter.PNG" width="700" height="80" >
+
+4) If all were done correctly, there should not be any error running the application. Thanks
