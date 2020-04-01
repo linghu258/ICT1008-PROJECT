@@ -6,9 +6,12 @@
 1) Download this repository 
 
 2) Download Folium
+
+```
 $ pip install folium 
-or
+       OR
 $ conda install -c conda-forge folium
+```
 
 2) Locate the folium folder YOU had initially installed
 
