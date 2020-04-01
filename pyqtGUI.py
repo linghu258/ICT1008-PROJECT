@@ -111,7 +111,7 @@ class Window(QMainWindow):
         self.destinationDDL.setFixedSize(180, 70)
         self.destinationDDL.setFont(QtGui.QFont("Arial", 13))
 
-        with open('BusPath/BusService.geojson') as access_json:
+        with open('BusService.geojson') as access_json:
             read_content = json.load(access_json)
             bus_access = read_content['features']
 
@@ -169,6 +169,7 @@ class Window(QMainWindow):
         lay.addWidget(self.view, stretch=1)
 
 #######################################################################################################################
+
     # Walking Path Function
     def generateWalkingPath(self):
         run_time = time.time()
@@ -450,7 +451,7 @@ class Window(QMainWindow):
         geo_json.add_to(self.m)
         busPath = self.busPathDDL.currentText()
 
-        with open('BusPath/BusService.geojson') as access_json:
+        with open('BusService.geojson') as access_json:
             read_content = json.load(access_json)
             bus_access = read_content['features']
 
