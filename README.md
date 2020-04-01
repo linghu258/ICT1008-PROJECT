@@ -1,8 +1,6 @@
-# ICT1008-PROJECT
+# WELCOME TO GROUP P2-6 ICT 1008 Project 
 
-**WELCOME TO GROUP P2-6 ICT 1008 Project**
-
-**REQUIRED TO RUN OUR APPLICATION - UPDATE FOLIUM FILE**
+**Please read the instruction carefully**
 
 1) **Download repository**
 <img src="Git-Image/Step 1.PNG" width="700" height="500" >
