@@ -1,9 +1,14 @@
 # ICT1008-PROJECT
 
-**WELCOME TO P2-6 ICT 1008 Project**
+**WELCOME TO GROUP P2-6 ICT 1008 Project**
 
 **REQUIRED TO RUN OUR APPLICATION - UPDATE FOLIUM FILE**
-1) Download the folium file from this repository 
+1) Download this repository 
+
+2) Download Folium
+$ pip install folium 
+or
+$ conda install -c conda-forge folium
 
 2) Locate the folium folder YOU had initially installed
 
