@@ -5,6 +5,8 @@
 **REQUIRED TO RUN OUR APPLICATION - UPDATE FOLIUM FILE**
 1) Download this repository 
 
+<img src="Git-Image/Step 1.png" width="700" height="500" >
+
 2) Download Folium
 
 ```
