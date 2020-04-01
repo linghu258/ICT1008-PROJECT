@@ -1,6 +1,6 @@
 # WELCOME TO GROUP P2-6 ICT 1008 Project 
 
-**Please read the instruction carefully**
+**PLEASE READ THE INSTRUCTION CAREFULLY**
 
 1) **Download repository**
 <img src="Git-Image/Step 1.PNG" width="700" height="500" >
