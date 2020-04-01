@@ -105,10 +105,10 @@ class Window(QMainWindow):
                 self.destinationDDL.addItem(retrieveHDB)
 
         # Set font size
-        self.sourceDDL.setFixedSize(180, 70)
+        self.sourceDDL.setFixedSize(250, 70)
         self.sourceDDL.setFont(QtGui.QFont("Arial", 13))
 
-        self.destinationDDL.setFixedSize(180, 70)
+        self.destinationDDL.setFixedSize(250, 70)
         self.destinationDDL.setFont(QtGui.QFont("Arial", 13))
 
         with open('BusService.geojson') as access_json:
@@ -205,7 +205,8 @@ class Window(QMainWindow):
         self.view.setHtml(data.getvalue().decode())
 
         print("----------------- Run Time ------------------")
-        print("--- %s seconds ---" % (time.time() - run_time))
+        print("%s seconds" % (time.time() - run_time))
+        print("")
 
 #######################################################################################################################
 
@@ -213,7 +214,7 @@ class Window(QMainWindow):
     def generateMrtPath(self):
         run_time = time.time()
 
-        ##initiliase GUI map
+        # initiliase GUI map
         self.m = folium.Map(location=[1.400150, 103.910172], zoom_start=17)
         nodeData = os.path.join('exportBuilding.geojson')
         geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
@@ -226,7 +227,7 @@ class Window(QMainWindow):
         mrtPath = []
         mrtRoutes = OrderedDict()  # containing routes
         mrtNodes = {}  # used for reverse finding
-        temp = {}  # used for reverse finding of rotues
+        temp = {}  # used for reverse finding of routes
 
         # get all the names of geojson files for mrt routes
         filedir = "MRT ROUTES\\"
@@ -234,14 +235,14 @@ class Window(QMainWindow):
 
         for f in json_files:
 
-            # load the mrtroutes geojson file
+            # load the mrt routes geojson file
             with open(filedir + f) as json_file:
                 data = json.load(json_file)
 
             for feature in data['features']:
 
                 # if the first item is a multilinestring, AKA mrt route , then add it to a list called mrtpath
-                if feature['geometry']['type'] == 'MultiLineString':
+                if feature['geometry']['type'] == 'LineString':
                     for y in feature['geometry']['coordinates']:
                         mrtPath.append(y)
                 else:
@@ -319,7 +320,8 @@ class Window(QMainWindow):
         self.view.setHtml(data.getvalue().decode())
 
         print("----------------- Run Time ------------------")
-        print("--- %s seconds ---" % (time.time() - run_time))
+        print("%s seconds" % (time.time() - run_time))
+        print("")
 
 #######################################################################################################################
 
@@ -439,7 +441,8 @@ class Window(QMainWindow):
         self.view.setHtml(data.getvalue().decode())
 
         print("----------------- Run Time ------------------")
-        print("--- %s seconds ---" % (time.time() - run_time))
+        print("%s seconds" % (time.time() - run_time))
+        print("")
 
 #######################################################################################################################
 
