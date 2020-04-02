@@ -2,6 +2,8 @@
 
 ### INSTALLATION GUIDE
 
+<h3 /h3>
+
 1) **Install PyQt (GUI)**
 
 ```
