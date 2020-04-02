@@ -2,12 +2,20 @@
 
 **PLEASE READ THE INSTRUCTION CAREFULLY**
 
-1) **Download repository**
+1) **Install PyQt**
+
+```
+pip install PyQt5
+      OR
+conda install -c anaconda pyqt
+```
+
+2) **Download repository**
 <img src="Git-Image/Step 1.PNG" width="700" height="500" >
 
-2) **Unzip the folder**
+3) **Unzip the folder**
 
-3) **Placed the Folium folder into your project interpreter**
+4) **Placed the Folium folder into your project interpreter**
 
 <img src="Git-Image/Folium_folder.PNG" width="700" height="500" >
 
@@ -15,4 +23,4 @@
 
 <img src="Git-Image/project_interpreter.PNG" width="700" height="80" >
 
-4) **If all were done correctly, there should not be any error running the application**
+5) **If all were done correctly, there should not be any error running the application**
