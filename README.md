@@ -26,3 +26,4 @@ conda install -c anaconda pyqt
 5) **If all libraries are installed correctly, there should not be any errors importing of folium in pyqtGUI.py**
 
 6) **Run pyqtGUI.py**
+<img src="Git-Image/projectApplication.PNG" width="700" height="500" >
