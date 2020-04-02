@@ -2,7 +2,7 @@
 
 ### INSTALLATION GUIDE
 
-1) **Install PyQt**
+1) **Install PyQt (GUI)**
 
 ```
 pip install PyQt5
