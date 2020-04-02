@@ -1,8 +1,8 @@
 # WELCOME TO GROUP P2-6 ICT 1008 Project 
 
-<h2 INSTALLATION GUIDE /h2>
+## INSTALLATION GUIDE
 
-<h3 1) **Install PyQt** /h3>
+1) **Install PyQt**
 
 ```
 pip install PyQt5
