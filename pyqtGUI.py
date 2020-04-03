@@ -1,10 +1,11 @@
-import folium
-import os
-import json
 import io
 import sys
+import os
+import json
 import time
+import folium
 
+import retrieveJSON
 from PyQt5 import QtWidgets, QtWebEngineWidgets, QtGui
 from PyQt5.QtWidgets import QMainWindow
 from qtconsole.qt import QtCore
@@ -43,11 +44,12 @@ class Window(QMainWindow):
         self.show()
 
     def guiSettings(self):
-        # Button Label
+        # "Select Path" Label
         self.pathLabel.setText("Select Paths:")
         self.pathLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
         self.pathLabel.setFixedSize(200, 30)
 
+        # Creating Buttons for the different paths
         walkingPathButton = QtWidgets.QPushButton("Walking Path")
         walkingPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
         walkingPathButton.setFixedSize(150, 80)
@@ -69,10 +71,12 @@ class Window(QMainWindow):
         mrtPathButton.setIconSize(QtCore.QSize(30, 30))
         mrtPathButton.clicked.connect(self.generateMrtPath)
 
+        # "View Transport Service Paths" label
         self.transPathLabel.setText("View Transport Service Paths:")
         self.transPathLabel.setFont(QtGui.QFont("Arial", 11, QtGui.QFont.Bold))
         self.transPathLabel.setFixedSize(200, 30)
 
+        # Creating button for side feature to show bus service route
         showBusPathButton = QtWidgets.QPushButton("Bus Service Path")
         showBusPathButton.setFont(QtGui.QFont("Arial", 13, QtGui.QFont.Bold))
         showBusPathButton.setIcon(QtGui.QIcon("image/bus.png"))
@@ -80,10 +84,6 @@ class Window(QMainWindow):
         showBusPathButton.clicked.connect(self.generateBusServicePath)
 
 #######################################################################################################################
-
-        with open('exportBuilding.geojson') as access_json:
-            read_content = json.load(access_json)
-            feature_access = read_content['features']
 
         # Source Label
         self.sourceLabel.setText("SELECT SOURCE")
@@ -97,7 +97,7 @@ class Window(QMainWindow):
         self.destinationLabel.setFixedSize(200, 30)
 
         # Retrieve names from json file (Drop Down List)
-        for feature_data in feature_access:
+        for feature_data in retrieveJSON.retrieveBuilding():
             buildingName = feature_data['properties']
             if 'name' in buildingName:
                 retrieveHDB = buildingName['name']
@@ -111,12 +111,8 @@ class Window(QMainWindow):
         self.destinationDDL.setFixedSize(250, 70)
         self.destinationDDL.setFont(QtGui.QFont("Arial", 13))
 
-        with open('BusService.geojson') as access_json:
-            read_content = json.load(access_json)
-            bus_access = read_content['features']
-
         # Retrieve names from json file (Drop Down List)
-        for bus_data in bus_access:
+        for bus_data in retrieveJSON.retrieveBusService():
             bus_name = bus_data['properties']
             if 'name' in bus_name:
                 retrieveBus = bus_name['name']
@@ -136,6 +132,7 @@ class Window(QMainWindow):
             location=[1.400150, 103.910172], titles="Punggol", zoom_start=17)
         nodeData = os.path.join('exportBuilding.geojson')
 
+        # Setting popup for each individual building and display the name
         geo_json = folium.GeoJson(
             nodeData, popup=folium.GeoJsonPopup(fields=['name']))
         geo_json.add_to(self.m)
@@ -174,6 +171,7 @@ class Window(QMainWindow):
     def generateWalkingPath(self):
         run_time = time.time()
 
+        # Initializing the default map
         self.m = folium.Map(location=[1.400150, 103.910172], zoom_start=17)
         nodeData = os.path.join('exportBuilding.geojson')
         geo_json = folium.GeoJson(
@@ -183,22 +181,20 @@ class Window(QMainWindow):
         dest = self.destinationDDL.currentText()
 
         nodes = {}
-        with open('exportBuilding.geojson') as access_json:
-            read_content = json.load(access_json)
-            feature_access = read_content['features']
-
-            for feature_data in feature_access:
-                buildingName = feature_data['properties']
-                if 'name' in buildingName:
-                    retrieveHDB = buildingName['name']
-                    nodes[retrieveHDB] = find_midpoint(
-                        feature_data['geometry']['coordinates'])
+        for feature_data in retrieveJSON.retrieveBuilding():
+            buildingName = feature_data['properties']
+            if 'name' in buildingName:
+                retrieveHDB = buildingName['name']
+                # Find the middle point in the list of coordinates (see exportBuilding.geojson)
+                nodes[retrieveHDB] = find_midpoint(
+                    feature_data['geometry']['coordinates'])
 
         pathfinder = Dijkstra(nodes)
         pathfinder.create_edges()
         graph = pathfinder.build_graph()
         path = pathfinder.find_shortest_path(graph, src, dest)
 
+        # Plot the walking path on the map
         folium.PolyLine(path, opacity=1, color='red').add_to(self.m)
         data = io.BytesIO()
         self.m.save(data, close_file=False)
@@ -255,7 +251,7 @@ class Window(QMainWindow):
                     mrtNodes[tuple(coord)] = feature['id']  # mrtNodes is reverse find , k=coordinates, v =name
 
                     # step 3: add the coordinates of the lrt node together with path.
-                    # This is neccesary because the data set does not link the nodes and routes
+                    # This is necessary because the data set does not link the nodes and routes
                     lowest = 999
                     lowestIndex = 0
 
@@ -298,20 +294,16 @@ class Window(QMainWindow):
             mrtPath.clear()
 
         # initialise hdb nodes
-        with open('exportBuilding.geojson') as access_json:
-            read_content = json.load(access_json)
-            feature_access = read_content['features']
-
-            for feature_data in feature_access:
-                buildingName = feature_data['properties']
-                if 'name' in buildingName:
-                    retrieveHDB = buildingName['name']
-                    nodes[retrieveHDB] = find_midpoint(feature_data['geometry']['coordinates'])
+        for feature_data in retrieveJSON.retrieveBuilding():
+            buildingName = feature_data['properties']
+            if 'name' in buildingName:
+                retrieveHDB = buildingName['name']
+                nodes[retrieveHDB] = find_midpoint(feature_data['geometry']['coordinates'])
 
         pathfinder = Dijkstra(nodes)  # parse in the nodes of hdb and lrt
         pathfinder.create_edges()  # create edges
         pathfinder.create_mrt_edgenodes(edges, mrtNodes, mrtRoutes)  # create mrt edges
-        graph = pathfinder.build_graph()
+        graph = pathfinder.build_MRTgraph()
 
         path = pathfinder.find_shortest_path(graph, src, dest)
         folium.PolyLine(path, opacity=1, color='red').add_to(self.m)
@@ -359,7 +351,7 @@ class Window(QMainWindow):
             service = data['features'][0]['properties']['ref']
 
             for feature in data['features']:
-                # if the first item is a multilinestring, AKA mrt route , then add it to a list called buspath
+                # if the first item is a multilinestring, AKA bus route , then add it to a list called buspath
                 if feature['geometry']['type'] == 'MultiLineString':
                     for i in range(len(feature['geometry']['coordinates'])):
                         for y in feature['geometry']['coordinates'][i]:
@@ -374,8 +366,8 @@ class Window(QMainWindow):
                     # busnode is used for reverse finding
                     busnode[tuple(coord)] = feature['id']
 
-                    # add the coordinates of the lrt node together with path.
-                    # This is neccesary because the data set does not link the nodes and routes
+                    # add the coordinates of the bus node together with path.
+                    # This is necessary because the data set does not link the nodes and routes
                     lowest = 999
                     lowestIndex = 0
                     for i in range(len(buspath)):
@@ -387,7 +379,7 @@ class Window(QMainWindow):
                             lowest = d
                             lowestIndex = i
                     buspath.insert(lowestIndex, coord)
-                    # insert the busnode's coordinate into the mrtpath
+                    # insert the busnode's coordinate into the buspath
 
             length = len(buspath)
             for i in range(length):
@@ -418,16 +410,12 @@ class Window(QMainWindow):
             temp.clear()
             buspath.clear()
 
-        ##initialise hdb nodes
-        with open('exportBuilding.geojson') as access_json:
-            read_content = json.load(access_json)
-            feature_access = read_content['features']
-
-            for feature_data in feature_access:
-                buildingName = feature_data['properties']
-                if 'name' in buildingName:
-                    retrieveHDB = buildingName['name']
-                    nodes[retrieveHDB] = find_midpoint(feature_data['geometry']['coordinates'])
+        # initialise hdb nodes
+        for feature_data in retrieveJSON.retrieveBuilding():
+            buildingName = feature_data['properties']
+            if 'name' in buildingName:
+                retrieveHDB = buildingName['name']
+                nodes[retrieveHDB] = find_midpoint(feature_data['geometry']['coordinates'])
 
         pathfinder = Dijkstra(nodes)  # parse in the nodes of hdb and busstops
         pathfinder.create_edges()  # create walk edges
@@ -448,21 +436,21 @@ class Window(QMainWindow):
 
     # Show Bus Service Path Function
     def generateBusServicePath(self):
+
+        # Initializing the default map
         self.m = folium.Map(location=[1.400150, 103.910172], zoom_start=17)
         nodeData = os.path.join('exportBuilding.geojson')
         geo_json = folium.GeoJson(nodeData, popup=folium.GeoJsonPopup(fields=['name']))
         geo_json.add_to(self.m)
         busPath = self.busPathDDL.currentText()
 
-        with open('BusService.geojson') as access_json:
-            read_content = json.load(access_json)
-            bus_access = read_content['features']
-
-        for bus_data in bus_access:
+        # Retrieving coordinates of the bus services route
+        for bus_data in retrieveJSON.retrieveBusService():
             busName = bus_data['properties']
             if busPath == busName['name']:
                 busCoord = [v[::-1] for v in bus_data['geometry']['coordinates'][0]]
 
+        # Plot path on the map
         folium.PolyLine(busCoord, opacity=1, color='red').add_to(self.m)
         data = io.BytesIO()
         self.m.save(data, close_file=False)
