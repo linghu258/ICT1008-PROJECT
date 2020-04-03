@@ -56,6 +56,22 @@ class Dijkstra:
             if seen_edges[(src, dst, weight)] > 1:  # dont add to graph if duplicated
                 continue
             graph[src].append([dst, weight, mode]) # add edge to graph
+
+        return graph
+
+    # to be called by gui
+    # builds a graph which contains a dictionary of all the nodes with a list of edges as their values.
+    def build_MRTgraph(self):
+        graph = defaultdict(list)
+        seen_edges = defaultdict(int)
+
+        # for every edge in the list of edges
+        for src, dst, weight, mode in self.edges:
+            # checking for duplicated edge entries
+            seen_edges[(src, dst, weight)] += 1
+            if seen_edges[(src, dst, weight)] > 1:  # dont add to graph if duplicated
+                continue
+            graph[src].append([dst, weight, mode]) # add edge to graph
             # remove this line of edge list is directed
             graph[dst].append([src, weight, mode])
 
