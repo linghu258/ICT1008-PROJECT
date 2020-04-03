@@ -28,7 +28,7 @@ conda install -c anaconda pyqt
 5) **If all libraries are installed correctly, there should not be any errors importing of folium in pyqtGUI.py**
 
 6) **Run pyqtGUI.py**
-<img src="Git-Image/projectApplication.PNG" width="900" height="500" >
+<img src="Git-Image/projectApplication.PNG" width="700" height="400" >
 
 #
 
@@ -48,5 +48,8 @@ Dataset containing the routes of each Bus Services operating at a desginated are
 Dataset containing the LRT track operating at Punggol
 - MRT ROUTES
 
-### Functions
-
+### Algorithm
+The program is using Dijkstra'a algorithm to plot:
+1) Shortest Walking Path
+2) Fastest Bus Path
+3) Fast Train Path
