@@ -1,6 +1,6 @@
 # WELCOME TO GROUP P2-6 ICT 1008 Project 
 
-### INSTALLATION GUIDE
+## INSTALLATION GUIDE
 
 <h3 /h3>
 
@@ -29,3 +29,24 @@ conda install -c anaconda pyqt
 
 6) **Run pyqtGUI.py**
 <img src="Git-Image/projectApplication.PNG" width="900" height="500" >
+
+#
+
+## INTRODUCTION
+Developing a path finding program, utilizing PyQT5 for the Graphical User Interface (GUI) and Folium for the interactive map component. Our program allow users to find the shortest path from their Source location to Destination location. 
+
+### Building Dataset
+Dataset containing coordinates of a desginated area of Punggol
+- exportBuilding.geojson
+
+### Bus Service Dataset
+Dataset containing the routes of each Bus Services operating at a desginated area og Punggol
+- BusService.geojson
+- BUS ROUTES
+
+### MRT Dataset
+Dataset containing the LRT track operating at Punggol
+- MRT ROUTES
+
+### Functions
+
